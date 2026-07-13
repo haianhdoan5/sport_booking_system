@@ -1,0 +1,138 @@
+<!doctype html>
+{% load static %}
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hệ Thống Đặt Sân Thể Thao</title>
+    <!-- Nhúng Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Nhúng FontAwesome để lấy các Icon đẹp mắt -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'bookings/css/style.css' %}" />
+  </head>
+  <body class="bg-light">
+    <!-- Thanh Menu điều hướng -->
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold fs-4" href="{% url 'home' %}">
+          <i class="fa-solid fa-trophy text-warning me-2"></i>SportBooking
+        </a>
+
+        <div class="d-flex align-items-center">
+          {% if user.is_authenticated %}
+          <span class="navbar-text text-white me-3 fw-bold">
+            👋 Xin chào, {{ user.username }}
+          </span>
+          <a
+            href="{% url 'booking_history' %}"
+            class="btn btn-sm btn-info me-2 fw-bold text-white"
+          >
+            <i class="fa-solid fa-clock-rotate-left me-1"></i>Lịch Sử
+          </a>
+          <form method="POST" action="{% url 'logout' %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="fa-solid fa-right-from-bracket me-1"></i>Đăng Xuất
+            </button>
+          </form>
+          {% else %}
+          <a href="{% url 'login' %}" class="btn btn-sm btn-outline-light me-2">
+            <i class="fa-solid fa-user me-1"></i>Đăng Nhập
+          </a>
+          <a href="{% url 'register' %}" class="btn btn-sm btn-success fw-bold">
+            <i class="fa-solid fa-user-plus me-1"></i>Đăng Ký
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <!-- Banner (Mới thêm) -->
+    <div class="hero-banner text-center shadow">
+      <div class="container">
+        <h1 class="display-4 fw-bold mb-3">Hệ Thống Đặt Sân Uy Tín</h1>
+        <p class="lead mb-4">
+          Nhanh chóng - Tiện lợi - Trải nghiệm thể thao tuyệt vời nhất dành cho
+          bạn.
+        </p>
+        <a
+          href="#danh-sach-san"
+          class="btn btn-warning btn-lg fw-bold rounded-pill px-4 shadow"
+        >
+          <i class="fa-solid fa-magnifying-glass me-2"></i>Khám Phá Ngay
+        </a>
+      </div>
+    </div>
+
+    <!-- Danh Sách Sân Thể Thao -->
+    <div class="container mb-5" id="danh-sach-san">
+      <h2 class="text-center mb-5 fw-bold text-uppercase text-primary">
+        <i class="fa-solid fa-location-dot me-2"></i>Danh Sách Sân Bãi
+      </h2>
+
+      <div class="row">
+        {% for field in fields %}
+        <div class="col-md-4 mb-4">
+          <!-- Thêm class field-card để có hiệu ứng hover -->
+          <div
+            class="card h-100 shadow-sm border-0 field-card rounded-4 overflow-hidden"
+          >
+            <div class="card-body p-4">
+              <span
+                class="badge {% if field.field_type == 'BADMINTON' %}bg-info{% else %}bg-success{% endif %} mb-3 px-3 py-2 rounded-pill fs-6"
+              >
+                {% if field.field_type == 'BADMINTON' %}
+                <i class="fa-solid fa-shuttlecock me-1"></i>
+                {% else %}
+                <i class="fa-solid fa-futbol me-1"></i>
+                {% endif %} {{ field.get_field_type_display }}
+              </span>
+
+              <h4 class="card-title fw-bold text-dark">{{ field.name }}</h4>
+              <hr class="text-muted" />
+              <p class="card-text text-danger fw-bold fs-5 mb-0">
+                <i class="fa-solid fa-money-bill-wave me-2"></i>
+                {{field.price_per_hour}} VNĐ / Giờ
+              </p>
+            </div>
+            <div class="card-footer bg-white border-top-0 pb-4 px-4">
+              {% if field.is_active %}
+              <a
+                href="{% url 'book_field' field.id %}"
+                class="btn btn-primary w-100 fw-bold rounded-pill py-2 shadow-sm"
+              >
+                <i class="fa-regular fa-calendar-check me-2"></i>Đặt Sân Ngay
+              </a>
+              {% else %}
+              <button
+                class="btn btn-secondary w-100 rounded-pill py-2"
+                disabled
+              >
+                <i class="fa-solid fa-hammer me-2"></i>Tạm bảo trì
+              </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+          <i class="fa-regular fa-folder-open text-muted fa-4x mb-3"></i>
+          <p class="text-muted fs-5">
+            Hiện tại chưa có sân nào được tạo trong hệ thống.
+          </p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <script src="{% static 'bookings/js/main.js' %}"></script>
+  </body>
+</html>

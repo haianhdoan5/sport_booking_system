@@ -1,0 +1,12 @@
+# Bỏ qua thư mục chứa thư viện (môi trường ảo)
+sport_env/
+
+# Bỏ qua các file cache của Python
+__pycache__/
+*.pyc
+
+# Bỏ qua database cục bộ (Khuyên dùng: để tránh ghi đè dữ liệu của nhau khi làm việc nhóm)
+db.sqlite3
+
+# Bỏ qua cấu hình VS Code cá nhân
+.vscode/
