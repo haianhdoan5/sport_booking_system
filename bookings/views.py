@@ -1,11 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import BookingForm
+from .forms import BookingForm, RegistrationForm
 from .models import Booking, Field
 
 
@@ -48,7 +47,7 @@ def book_field_view(request, field_id):
 # View để xử lý việc đăng ký tài khoản người dùng
 def register_view(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()  # Lưu user mới vào Database
             login(request, user)  # Đăng nhập luôn cho user sau khi tạo thành công
@@ -61,7 +60,7 @@ def register_view(request):
                 for error in errors:
                     messages.error(request, f"{error}")
     else:
-        form = UserCreationForm()
+        form = RegistrationForm()
 
     return render(request, "bookings/register.html", {"form": form})
 

@@ -1,22 +1,27 @@
-{% extends "bookings/base.html" %} {% block title %}Đăng ký tài khoản{% endblock %} {% block content %}
-<div class="container page-shell mt-4">
-  <div class="row justify-content-center">
-    <div class="col-md-5">
+{% extends "bookings/base.html" %} {% block title %}Đăng ký tài khoản{% endblock %} {% block body_class %}sb-auth-page{% endblock %} {% block site_chrome %}{% endblock %} {% block content %}
+<div class="auth-shell">
+  <div class="card shadow-sm border-0 auth-card auth-card--centered">
+    <div class="card-header text-center auth-card__header">
+      <span class="auth-card__eyebrow">SportBooking</span>
+      <h1 class="mb-0 fw-bold">Đăng ký</h1>
+    </div>
+    <div class="card-body p-4 p-lg-5">
+      <div class="auth-home-link text-center mb-3">
+        <a href="{% url 'home' %}">Về trang chủ</a>
+      </div>
+
       {% if messages %} {% for message in messages %}
       <div class="alert alert-danger alert-dismissible fade show fw-bold shadow-sm">⚠️ {{ message }}</div>
       {% endfor %} {% endif %}
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-success text-white text-center">
-          <h4 class="mb-0 fw-bold">Tạo Tài Khoản Mới</h4>
-        </div>
-        <div class="card-body p-4">
-          <form method="POST">
-            {% csrf_token %} {{ form.as_p }}
-            <button type="submit" class="btn btn-success w-100 fw-bold mt-2">Đăng Ký</button>
-          </form>
-          <p class="text-center mt-3 mb-0">Đã có tài khoản? <a href="{% url 'login' %}">Đăng nhập ngay</a></p>
-        </div>
-      </div>
+
+      <form method="POST" class="auth-form">
+        {% csrf_token %} {{ form.as_p }}
+        <button type="submit" class="btn btn-success w-100 fw-bold mt-2">Đăng Ký</button>
+      </form>
+      <p class="text-center mt-3 mb-0">
+        Đã có tài khoản?
+        <a href="{% url 'login' %}">Đăng nhập ngay</a>
+      </p>
     </div>
   </div>
 </div>

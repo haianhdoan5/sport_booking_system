@@ -1,40 +1,80 @@
 {% extends "bookings/base.html" %} {% block title %}Hệ Thống Đặt Sân Thể Thao{% endblock %} {% block hero %}
-<div class="hero-banner text-center shadow">
+<section class="hero-banner">
   <div class="container">
-    <h1 class="display-4 fw-bold mb-3">Hệ Thống Đặt Sân Uy Tín</h1>
-    <p class="lead mb-4">Nhanh chóng - Tiện lợi - Trải nghiệm thể thao tuyệt vời nhất dành cho bạn.</p>
-    <a href="#danh-sach-san" class="btn btn-warning btn-lg fw-bold rounded-pill px-4 shadow"> <i class="fa-solid fa-magnifying-glass me-2"></i>Khám Phá Ngay </a>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="hero-kicker">SportBooking</span>
+        <h1>Nhanh chóng, tiện lợi, đặt sân trong vài chạm.</h1>
+        <p>Chọn sân, xem giá và đặt ngay với thao tác thật gọn.</p>
+        <div class="hero-actions">
+          <a href="#danh-sach-san" class="btn btn-warning btn-lg fw-bold rounded-pill px-4 shadow"> <i class="fa-solid fa-magnifying-glass me-2"></i>Khám phá ngay </a>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="hero-metric">
+          <strong>{{ fields|length }}</strong>
+          <span>Sân đang mở</span>
+        </div>
+        <div class="hero-metric hero-metric--accent">
+          <strong>24/7</strong>
+          <span>Đặt lịch nhanh, tiện lợi</span>
+        </div>
+        <div class="hero-note">
+          <i class="fa-solid fa-circle-check me-2"></i>
+          Dễ xem, dễ chọn, dễ đặt.
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 {% endblock %} {% block content %}
 <div class="container page-shell mb-5" id="danh-sach-san">
-  <h2 class="text-center mb-5 fw-bold text-uppercase text-primary section-title"><i class="fa-solid fa-location-dot me-2"></i>Danh Sách Sân Bãi</h2>
+  <div class="section-heading">
+    <span class="section-tag">Danh sách sân</span>
+    <h2 class="section-title">Xem nhanh sân trống và đặt ngay</h2>
+    <p>Giá rõ ràng, trạng thái rõ ràng, thao tác gọn.</p>
+  </div>
 
-  <div class="row">
+  <div class="row g-4">
     {% for field in fields %}
-    <div class="col-md-4 mb-4">
-      <div class="card h-100 shadow-sm border-0 field-card rounded-4 overflow-hidden">
-        <div class="card-body p-4">
-          <span class="badge {% if field.field_type == 'BADMINTON' %}bg-info{% else %}bg-success{% endif %} mb-3 px-3 py-2 rounded-pill fs-6">
+    <div class="col-md-6 col-xl-4">
+      <div class="card h-100 shadow-sm border-0 field-card rounded-5 overflow-hidden">
+        <div class="field-card__top">
+          <span class="badge {% if field.field_type == 'BADMINTON' %}bg-info{% else %}bg-success{% endif %} px-3 py-2 rounded-pill">
             {% if field.field_type == 'BADMINTON' %}
             <i class="fa-solid fa-shuttlecock me-1"></i>
             {% else %}
             <i class="fa-solid fa-futbol me-1"></i>
             {% endif %} {{ field.get_field_type_display }}
           </span>
-
-          <h4 class="card-title fw-bold text-dark">{{ field.name }}</h4>
-          <hr class="text-muted" />
-          <p class="card-text text-danger fw-bold fs-5 mb-0">
-            <i class="fa-solid fa-money-bill-wave me-2"></i>
-            {{ field.price_per_hour }} VNĐ / Giờ
-          </p>
+          <span class="field-status {% if field.is_active %}is-active{% else %}is-off{% endif %}"> {% if field.is_active %}Đang mở{% else %}Bảo trì{% endif %} </span>
         </div>
+
+        <div class="card-body p-4 p-xl-4">
+          <h3 class="card-title fw-bold text-dark mb-3">{{ field.name }}</h3>
+          <p class="field-price mb-4">
+            <span>{{ field.price_per_hour }}</span>
+            <small>VNĐ / giờ</small>
+          </p>
+
+          <div class="field-meta">
+            <div>
+              <span>Loại sân</span>
+              <strong>{{ field.get_field_type_display }}</strong>
+            </div>
+            <div>
+              <span>Trạng thái</span>
+              <strong>{% if field.is_active %}Sẵn sàng{% else %}Ngưng nhận{% endif %}</strong>
+            </div>
+          </div>
+        </div>
+
         <div class="card-footer bg-white border-top-0 pb-4 px-4">
           {% if field.is_active %}
-          <a href="{% url 'book_field' field.id %}" class="btn btn-primary w-100 fw-bold rounded-pill py-2 shadow-sm"> <i class="fa-regular fa-calendar-check me-2"></i>Đặt Sân Ngay </a>
+          <a href="{% url 'book_field' field.id %}" class="btn btn-primary w-100 fw-bold rounded-pill py-3 shadow-sm"> <i class="fa-regular fa-calendar-check me-2"></i>Đặt sân ngay </a>
           {% else %}
-          <button class="btn btn-secondary w-100 rounded-pill py-2" disabled><i class="fa-solid fa-hammer me-2"></i>Tạm bảo trì</button>
+          <button class="btn btn-secondary w-100 rounded-pill py-3" disabled><i class="fa-solid fa-hammer me-2"></i>Tạm bảo trì</button>
           {% endif %}
         </div>
       </div>
@@ -42,7 +82,7 @@
     {% empty %}
     <div class="col-12 text-center py-5">
       <i class="fa-regular fa-folder-open text-muted fa-4x mb-3"></i>
-      <p class="text-muted fs-5">Hiện tại chưa có sân nào được tạo trong hệ thống.</p>
+      <p class="text-muted fs-5 mb-0">Hiện tại chưa có sân nào được tạo trong hệ thống.</p>
     </div>
     {% endfor %}
   </div>

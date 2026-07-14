@@ -12,27 +12,37 @@
     {% block extra_css %}{% endblock %}
   </head>
   <body class="bg-light {% block body_class %}{% endblock %}">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+    {% block site_chrome %}
+    <nav class="navbar navbar-expand-lg navbar-dark sb-navbar sticky-top shadow-sm">
       <div class="container">
-        <a class="navbar-brand fw-bold fs-4" href="{% url 'home' %}"> <i class="fa-solid fa-trophy text-warning me-2"></i>SportBooking </a>
+        <a class="navbar-brand sb-brand" href="{% url 'home' %}">
+          <span class="sb-brand__mark"><i class="fa-solid fa-trophy"></i></span>
+          <span class="sb-brand__text">
+            <strong>SportBooking</strong>
+            <small>Đặt sân nhanh, rõ ràng, hiện đại</small>
+          </span>
+        </a>
 
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+          <span class="sb-navbar-chip d-none d-md-inline-flex"> <i class="fa-solid fa-shield-heart me-2"></i>Giao diện sáng, dễ dùng </span>
+          <span class="sb-navbar-chip d-none d-md-inline-flex"> <i class="fa-solid fa-bolt me-2"></i>Đặt nhanh trong vài bước </span>
+
           {% if user.is_authenticated %}
-          <span class="navbar-text text-white me-3 fw-bold">👋 Xin chào, {{ user.username }}</span>
-          <a href="{% url 'booking_history' %}" class="btn btn-sm btn-info me-2 fw-bold text-white"> <i class="fa-solid fa-clock-rotate-left me-1"></i>Lịch Sử </a>
+          <span class="navbar-text sb-navbar-greeting me-2">👋 Xin chào, {{ user.username }}</span>
+          <a href="{% url 'booking_history' %}" class="btn btn-sm sb-btn-soft me-1"> <i class="fa-solid fa-clock-rotate-left me-1"></i>Lịch sử </a>
           <form method="POST" action="{% url 'logout' %}" class="m-0">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-right-from-bracket me-1"></i>Đăng Xuất</button>
+            <button type="submit" class="btn btn-sm sb-btn-outline"><i class="fa-solid fa-right-from-bracket me-1"></i>Đăng xuất</button>
           </form>
           {% else %}
-          <a href="{% url 'login' %}" class="btn btn-sm btn-outline-light me-2"> <i class="fa-solid fa-user me-1"></i>Đăng Nhập </a>
-          <a href="{% url 'register' %}" class="btn btn-sm btn-success fw-bold"> <i class="fa-solid fa-user-plus me-1"></i>Đăng Ký </a>
+          <a href="{% url 'login' %}" class="btn btn-sm sb-btn-outline me-1"> <i class="fa-solid fa-user me-1"></i>Đăng nhập </a>
+          <a href="{% url 'register' %}" class="btn btn-sm sb-btn-accent fw-bold"> <i class="fa-solid fa-user-plus me-1"></i>Đăng ký </a>
           {% endif %}
         </div>
       </div>
     </nav>
 
-    {% block hero %}{% endblock %}
+    {% block hero %}{% endblock %} {% endblock %}
 
     <main>{% block content %}{% endblock %}</main>
 

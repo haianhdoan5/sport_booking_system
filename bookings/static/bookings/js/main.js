@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const revealTargets = document.querySelectorAll(".hero-banner, .field-card, .card, .table, .alert, .navbar, .btn");
+  const siteNavbar = document.querySelector(".sb-navbar");
+  const revealTargets = document.querySelectorAll(".hero-banner, .hero-copy, .hero-panel, .section-heading, .field-card, .card, .table, .alert, .navbar, .btn, .field-card__top, .field-meta");
 
   revealTargets.forEach((element) => element.classList.add("reveal"));
 
@@ -18,6 +19,37 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   revealTargets.forEach((element) => observer.observe(element));
+
+  if (siteNavbar) {
+    let lastScrollY = window.scrollY;
+    let isHidden = false;
+    const collapseThreshold = 72;
+
+    siteNavbar.classList.remove("sb-navbar--hidden");
+
+    const updateNavbarState = () => {
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollY;
+      const shouldHide = currentScrollY > collapseThreshold && scrollingDown;
+
+      if (shouldHide !== isHidden) {
+        siteNavbar.classList.toggle("sb-navbar--hidden", shouldHide);
+        isHidden = shouldHide;
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        window.requestAnimationFrame(updateNavbarState);
+      },
+      { passive: true },
+    );
+
+    updateNavbarState();
+  }
 
   const buttons = document.querySelectorAll(".btn");
   buttons.forEach((button) => {

@@ -1,24 +1,24 @@
-{% extends "bookings/base.html" %} {% block title %}Đăng nhập{% endblock %} {% block content %}
-<div class="container page-shell mt-4">
-  <div class="row justify-content-center">
-    <div class="col-md-5">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white text-center">
-          <h4 class="mb-0 fw-bold">Đăng Nhập Hệ Thống</h4>
-        </div>
-        <div class="card-body p-4">
-          <form method="POST">
-            {% csrf_token %} {% if request.GET.next %}
-            <input type="hidden" name="next" value="{{ request.GET.next }}" />
-            {% endif %} {{ form.as_p }}
-            <button type="submit" class="btn btn-primary w-100 fw-bold mt-2">Đăng Nhập</button>
-          </form>
-          <p class="text-center mt-3 mb-0">
-            Chưa có tài khoản?
-            <a href="{% url 'register' %}">Đăng ký tại đây</a>
-          </p>
-        </div>
+{% extends "bookings/base.html" %} {% block title %}Đăng nhập{% endblock %} {% block body_class %}sb-auth-page{% endblock %} {% block site_chrome %}{% endblock %} {% block content %}
+<div class="auth-shell">
+  <div class="card shadow-sm border-0 auth-card auth-card--centered">
+    <div class="card-header text-center auth-card__header">
+      <span class="auth-card__eyebrow">SportBooking</span>
+      <h1 class="mb-0 fw-bold">Đăng nhập</h1>
+    </div>
+    <div class="card-body p-4 p-lg-5">
+      <div class="auth-home-link text-center mb-3">
+        <a href="{% url 'home' %}">Về trang chủ</a>
       </div>
+      <form method="POST" class="auth-form">
+        {% csrf_token %} {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}" />
+        {% endif %} {{ form.as_p }}
+        <button type="submit" class="btn btn-primary w-100 fw-bold mt-2">Đăng Nhập</button>
+      </form>
+      <p class="text-center mt-3 mb-0">
+        Chưa có tài khoản?
+        <a href="{% url 'register' %}">Đăng ký tại đây</a>
+      </p>
     </div>
   </div>
 </div>
