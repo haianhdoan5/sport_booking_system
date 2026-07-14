@@ -1,1 +1,63 @@
-console.log("Hệ thống SportBooking đã load JS thành công!");
+document.addEventListener("DOMContentLoaded", () => {
+  const revealTargets = document.querySelectorAll(".hero-banner, .field-card, .card, .table, .alert, .navbar, .btn");
+
+  revealTargets.forEach((element) => element.classList.add("reveal"));
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.15,
+    },
+  );
+
+  revealTargets.forEach((element) => observer.observe(element));
+
+  const buttons = document.querySelectorAll(".btn");
+  buttons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const rect = button.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      const size = Math.max(rect.width, rect.height);
+
+      ripple.className = "ripple";
+      ripple.style.width = `${size}px`;
+      ripple.style.height = `${size}px`;
+      ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
+
+      button.style.position = "relative";
+      button.style.overflow = "hidden";
+      button.appendChild(ripple);
+
+      window.setTimeout(() => ripple.remove(), 650);
+    });
+  });
+
+  const inputs = document.querySelectorAll("input, select, textarea");
+  inputs.forEach((input) => {
+    input.classList.add("form-control");
+    input.addEventListener("focus", () => input.parentElement?.classList.add("is-focused"));
+    input.addEventListener("blur", () => input.parentElement?.classList.remove("is-focused"));
+  });
+
+  const navLinks = document.querySelectorAll(".navbar a[href]");
+  const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+
+  navLinks.forEach((link) => {
+    try {
+      const linkPath = new URL(link.href).pathname.replace(/\/+$/, "") || "/";
+      if (linkPath === currentPath) {
+        link.classList.add("active");
+      }
+    } catch (error) {
+      return;
+    }
+  });
+});
