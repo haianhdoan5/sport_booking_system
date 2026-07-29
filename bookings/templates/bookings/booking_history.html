@@ -1,11 +1,6 @@
 {% extends "bookings/base.html" %} {% block title %}Lịch Sử Đặt Sân{% endblock %} {% block content %}
 <div class="container page-shell">
   <h3 class="mb-4 fw-bold text-primary">Lịch Sử Đặt Sân Của Tôi</h3>
-
-  {% if messages %} {% for message in messages %}
-  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show fw-bold">{{ message }}</div>
-  {% endfor %} {% endif %}
-
   <div class="card shadow-sm border-0">
     <div class="card-body p-0">
       <table class="table table-hover mb-0">

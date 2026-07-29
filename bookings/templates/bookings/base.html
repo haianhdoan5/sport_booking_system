@@ -44,7 +44,29 @@
 
     {% block hero %}{% endblock %} {% endblock %}
 
-    <main>{% block content %}{% endblock %}</main>
+    <main>
+      {% if messages %}
+      <div class="container mt-3">
+        {% for message in messages %}
+        <div
+          class="
+            alert
+            {% if message.tags == 'error' %}
+              alert-danger
+            {% elif message.tags %}
+              alert-{{ message.tags }}
+            {% else %}
+              alert-info
+            {% endif %}
+            fw-bold
+          "
+        >
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} {% block content %}{% endblock %}
+    </main>
 
     <script src="{% static 'bookings/js/main.js' %}" defer></script>
     {% block extra_js %}{% endblock %}

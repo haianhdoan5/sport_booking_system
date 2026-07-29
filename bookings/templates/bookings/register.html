@@ -9,11 +9,6 @@
       <div class="auth-home-link text-center mb-3">
         <a href="{% url 'home' %}">Về trang chủ</a>
       </div>
-
-      {% if messages %} {% for message in messages %}
-      <div class="alert alert-danger alert-dismissible fade show fw-bold shadow-sm">⚠️ {{ message }}</div>
-      {% endfor %} {% endif %}
-
       <form method="POST" class="auth-form">
         {% csrf_token %} {{ form.as_p }}
         <button type="submit" class="btn btn-success w-100 fw-bold mt-2">Đăng Ký</button>

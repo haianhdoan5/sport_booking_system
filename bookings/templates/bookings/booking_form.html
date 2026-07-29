@@ -2,10 +2,6 @@
 <div class="container page-shell mt-4">
   <div class="row justify-content-center">
     <div class="col-md-6">
-      {% if messages %} {% for message in messages %}
-      <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show">{{ message }}</div>
-      {% endfor %} {% endif %}
-
       <div class="card shadow-sm">
         <div class="card-header bg-primary text-white">
           <h4 class="mb-0">Tiến hành đặt: {{ field.name }}</h4>
