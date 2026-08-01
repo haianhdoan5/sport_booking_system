@@ -1,12 +1,30 @@
-# Bỏ qua thư mục chứa thư viện
+# Virtual environments
 sport_env/
+venv/
+.venv/
 
-# Bỏ qua các file cache của Python
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*.log
 
-# Bỏ qua database cục bộ
-db.sqlite3
+# Local database
+/db.sqlite3
+*.sqlite3
 
-# Bỏ qua cấu hình VS Code cá nhân
+# Environment variables
+.env
+
+# Static files collected for deployment
+/staticfiles/
+
+# Editors and operating systems
 .vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test output
+.pytest_cache/
+.coverage
+htmlcov/

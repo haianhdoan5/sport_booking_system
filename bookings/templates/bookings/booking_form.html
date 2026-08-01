@@ -1,28 +1,49 @@
-{% extends "bookings/base.html" %} {% block title %}Đặt Sân - {{ field.name }}{% endblock %} {% block content %}
+{% extends "bookings/base.html" %} {% block title %} Đặt sân - {{ field.name }} {% endblock %} {% block content %}
 <div class="container page-shell mt-4">
   <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <h4 class="mb-0">Tiến hành đặt: {{ field.name }}</h4>
+    <div class="col-lg-7 col-xl-6">
+      <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="card-header bg-primary text-white p-4">
+          <h1 class="h4 mb-0">Tiến hành đặt: {{ field.name }}</h1>
         </div>
-        <div class="card-body">
-          <p class="text-danger fw-bold">Đơn giá: {{ field.price_per_hour }} Đ / Giờ</p>
 
-          <form method="POST">
+        <div class="card-body p-4">
+          <p class="booking-price mb-4">
+            Đơn giá:
+
+            <strong> {{ field.price_per_hour|floatformat:"0g" }} VNĐ/giờ </strong>
+          </p>
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form method="post">
             {% csrf_token %}
-            <div class="mb-3">
-              <label class="form-label fw-bold">Thời gian bắt đầu</label>
-              {{ form.start_time }}
-            </div>
 
             <div class="mb-3">
-              <label class="form-label fw-bold">Thời gian kết thúc</label>
-              {{ form.end_time }}
+              <label for="{{ form.start_time.id_for_label }}" class="form-label fw-bold"> Thời gian bắt đầu </label>
+
+              {{ form.start_time }} {% for error in form.start_time.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
             </div>
 
-            <button type="submit" class="btn btn-success w-100 fw-bold">Xác Nhận Đặt Sân</button>
-            <a href="{% url 'home' %}" class="btn btn-secondary w-100 mt-2">Quay lại</a>
+            <div class="mb-4">
+              <label for="{{ form.end_time.id_for_label }}" class="form-label fw-bold"> Thời gian kết thúc </label>
+
+              {{ form.end_time }} {% for error in form.end_time.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 fw-bold py-2">Xác nhận đặt sân</button>
+
+            <a href="{% url 'home' %}" class="btn btn-secondary w-100 mt-2 py-2"> Quay lại </a>
           </form>
         </div>
       </div>
