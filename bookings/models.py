@@ -1,6 +1,6 @@
 from decimal import ROUND_HALF_UP, Decimal
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -45,7 +45,7 @@ class Booking(models.Model):
         CANCELLED = "CANCELLED", "Đã hủy"
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name="Khách hàng",
     )
@@ -94,30 +94,39 @@ class Booking(models.Model):
         if self.start_time >= self.end_time:
             raise ValidationError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
 
-        # Chỉ kiểm tra quá khứ khi tạo booking mới.
-        # Tránh lỗi khi admin xác nhận hoặc người dùng hủy booking cũ.
+        # Chỉ kiểm tra thời gian quá khứ khi tạo booking mới.
         if self._state.adding and self.start_time < timezone.now():
             raise ValidationError("Không thể đặt sân trong quá khứ.")
 
-        if self.field_id:
-            if not self.field.is_active:
-                raise ValidationError("Sân này hiện đang tạm ngưng nhận đặt lịch.")
+        if not self.field_id:
+            return
 
-            overlapping_bookings = Booking.objects.filter(
-                field_id=self.field_id,
-                status__in=[
-                    self.Status.PENDING,
-                    self.Status.CONFIRMED,
-                ],
-                start_time__lt=self.end_time,
-                end_time__gt=self.start_time,
-            )
+        # Chỉ chặn sân ngừng hoạt động khi tạo booking mới.
+        # Booking cũ vẫn có thể được cập nhật trạng thái.
+        if self._state.adding and not self.field.is_active:
+            raise ValidationError("Sân này hiện đang tạm ngưng nhận đặt lịch.")
 
-            if self.pk:
-                overlapping_bookings = overlapping_bookings.exclude(pk=self.pk)
+        # Booking đã hủy không cần kiểm tra trùng lịch.
+        active_statuses = [
+            self.Status.PENDING,
+            self.Status.CONFIRMED,
+        ]
 
-            if overlapping_bookings.exists():
-                raise ValidationError("Sân đã có người đặt trong khung giờ bạn chọn.")
+        if self.status not in active_statuses:
+            return
+
+        overlapping_bookings = Booking.objects.filter(
+            field_id=self.field_id,
+            status__in=active_statuses,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time,
+        )
+
+        if self.pk:
+            overlapping_bookings = overlapping_bookings.exclude(pk=self.pk)
+
+        if overlapping_bookings.exists():
+            raise ValidationError("Sân đã có người đặt trong khung giờ bạn chọn.")
 
     def calculate_total_price(self):
         duration = self.end_time - self.start_time
@@ -132,13 +141,16 @@ class Booking(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        # Kiểm tra dữ liệu trước khi tính tiền.
+        self.full_clean(exclude=["total_price"])
+
         if self.start_time and self.end_time and self.field_id:
             self.total_price = self.calculate_total_price()
 
-        self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
         return (
-            f"Đơn đặt {self.field.name} - " f"{self.start_time.strftime('%H:%M %d/%m')}"
+            f"Đơn đặt {self.field.name} - "
+            f"{self.start_time.strftime('%H:%M %d/%m/%Y')}"
         )

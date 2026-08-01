@@ -1,5 +1,9 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    UserCreationForm,
+)
+from django.utils import timezone
 
 from .models import Booking
 
@@ -7,28 +11,103 @@ from .models import Booking
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
-        fields = ["start_time", "end_time"]  # Khách chỉ cần nhập 2 ô này
-        # Chuyển ô nhập liệu thành dạng chọn Ngày - Giờ
+        fields = [
+            "start_time",
+            "end_time",
+        ]
+
         widgets = {
             "start_time": forms.DateTimeInput(
-                attrs={"type": "datetime-local", "class": "form-control"}
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "type": "datetime-local",
+                    "class": "form-control",
+                    "autocomplete": "off",
+                },
             ),
             "end_time": forms.DateTimeInput(
-                attrs={"type": "datetime-local", "class": "form-control"}
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "type": "datetime-local",
+                    "class": "form-control",
+                    "autocomplete": "off",
+                },
             ),
-        }
-
-
-class RegistrationForm(UserCreationForm):
-    class Meta(UserCreationForm.Meta):
-        help_texts = {
-            "username": "",
-            "password1": "",
-            "password2": "",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["username"].help_text = ""
-        self.fields["password1"].help_text = ""
-        self.fields["password2"].help_text = ""
+
+        minimum_time = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
+
+        self.fields["start_time"].widget.attrs["min"] = minimum_time
+        self.fields["end_time"].widget.attrs["min"] = minimum_time
+
+
+class LoginForm(AuthenticationForm):
+    def __init__(self, request=None, *args, **kwargs):
+        super().__init__(
+            request=request,
+            *args,
+            **kwargs,
+        )
+
+        self.fields["username"].label = "Tên đăng nhập"
+        self.fields["password"].label = "Mật khẩu"
+
+        self.fields["username"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Nhập tên đăng nhập",
+                "autocomplete": "username",
+            }
+        )
+
+        self.fields["password"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Nhập mật khẩu",
+                "autocomplete": "current-password",
+            }
+        )
+
+
+class RegistrationForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        fields = ("username",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        labels = {
+            "username": "Tên đăng nhập",
+            "password1": "Mật khẩu",
+            "password2": "Nhập lại mật khẩu",
+        }
+
+        placeholders = {
+            "username": "Nhập tên đăng nhập",
+            "password1": "Nhập mật khẩu",
+            "password2": "Nhập lại mật khẩu",
+        }
+
+        autocomplete = {
+            "username": "username",
+            "password1": "new-password",
+            "password2": "new-password",
+        }
+
+        for name, field in self.fields.items():
+            field.label = labels.get(name, field.label)
+            field.help_text = None
+
+            field.widget.attrs.update(
+                {
+                    "class": "form-control",
+                    "placeholder": placeholders.get(name, ""),
+                    "autocomplete": autocomplete.get(
+                        name,
+                        "off",
+                    ),
+                }
+            )
