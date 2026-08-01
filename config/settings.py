@@ -40,7 +40,8 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    "bookings",
+    "jazzmin",
+    "bookings.apps.BookingsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -120,3 +121,87 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
+
+JAZZMIN_SETTINGS = {
+    "site_title": "SportBooking Admin",
+    "site_header": "SportBooking",
+    "site_brand": "SportBooking",
+    "welcome_sign": "Đăng nhập hệ thống quản lý SportBooking",
+    "copyright": "SportBooking",
+    "site_url": "/",
+    # Thanh tìm kiếm chung
+    "search_model": ["bookings.Booking", "bookings.Field", "auth.User"],
+    # Menu phía trên
+    "topmenu_links": [
+        {"name": "Trang quản trị", "url": "admin:index"},
+        {"name": "Xem website", "url": "home", "new_window": True},
+        {"app": "bookings"},
+    ],
+    # Menu tài khoản phía trên bên phải
+    "usermenu_links": [{"name": "Xem website", "url": "home", "new_window": True}],
+    # Hiển thị menu trái
+    "show_sidebar": True,
+    # Tự động mở rộng menu
+    "navigation_expanded": True,
+    # Thứ tự menu
+    "order_with_respect_to": ["bookings", "bookings.booking", "bookings.field", "auth", "auth.user", "auth.group"],
+    # Biểu tượng cho ứng dụng và model
+    "icons": {
+        "bookings": "fas fa-calendar-check",
+        "bookings.booking": "fas fa-calendar-alt",
+        "bookings.field": "fas fa-futbol",
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.group": "fas fa-users",
+    },
+    "default_icon_parents": "fas fa-folder",
+    "default_icon_children": "fas fa-circle",
+    # Hiện modal thay vì cửa sổ popup cũ
+    "related_modal_active": True,
+    # Giao diện form
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "bookings.booking": "collapsible",
+        "bookings.field": "horizontal_tabs",
+        "auth.user": "collapsible",
+        "auth.group": "vertical_tabs",
+    },
+    # Mở trình chỉnh giao diện trực tiếp
+    "show_ui_builder": True,
+    # Chưa dùng CSS admin cũ
+    "custom_css": None,
+    "custom_js": None,
+    "language_chooser": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    # Giao diện sáng
+    "theme": "flatly",
+    # Navbar sáng
+    "navbar": "navbar-white navbar-light",
+    # Màu nhấn
+    "accent": "accent-primary",
+    # Cố định navbar và sidebar
+    "navbar_fixed": True,
+    "sidebar_fixed": True,
+    # Không đóng khung toàn bộ nội dung
+    "layout_boxed": False,
+    # Sidebar tối giống ảnh mẫu
+    "sidebar": "sidebar-dark-primary",
+    # Cách hiển thị menu con
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    # Màu các nút
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+}

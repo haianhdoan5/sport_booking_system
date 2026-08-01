@@ -1,7 +1,0 @@
-{% extends "admin/base.html" %} {% load static %} {% block title %}SportBooking Admin{% endblock %} {% block extrahead %} {{ block.super }}
-<link rel="stylesheet" href="{% static 'bookings/css/admin.css' %}" />
-{% endblock %} {% block branding %}
-<h1 id="site-name">
-  <a href="{% url 'admin:index' %}">SportBooking Administration</a>
-</h1>
-{% endblock %} {% block nav-global %}{% endblock %}
