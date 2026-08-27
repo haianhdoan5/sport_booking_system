@@ -156,3 +156,103 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.booking_code} - " f"{self.field.name} - " f"{self.start_time.strftime('%H:%M %d/%m/%Y')}"
+
+
+class Payment(models.Model):
+    class Method(models.TextChoices):
+        CASH = "CASH", "Thanh toán tại sân"
+        BANK_TRANSFER = "BANK_TRANSFER", "Chuyển khoản"
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Chờ thanh toán"
+        PAID = "PAID", "Đã thanh toán"
+        FAILED = "FAILED", "Thanh toán thất bại"
+
+    booking = models.OneToOneField(
+        Booking, on_delete=models.CASCADE, related_name="payment", verbose_name="Đơn đặt sân"
+    )
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, verbose_name="Số tiền")
+
+    method = models.CharField(
+        max_length=20, choices=Method.choices, default=Method.CASH, verbose_name="Phương thức thanh toán"
+    )
+
+    status = models.CharField(
+        max_length=15, choices=Status.choices, default=Status.PENDING, verbose_name="Trạng thái thanh toán"
+    )
+
+    transaction_code = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name="Mã giao dịch")
+
+    paid_at = models.DateTimeField(blank=True, null=True, verbose_name="Thời gian thanh toán")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
+
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
+
+    def clean(self):
+        super().clean()
+
+        if self.booking_id:
+            if self.booking.status == Booking.Status.CANCELLED:
+                raise ValidationError("Không thể thanh toán cho lượt đặt sân đã bị hủy.")
+
+    def save(self, *args, **kwargs):
+        if self.booking_id:
+            self.amount = self.booking.total_price or Decimal("0.00")
+
+        if self.status == self.Status.PAID and not self.paid_at:
+            self.paid_at = timezone.now()
+
+        if self.status != self.Status.PAID:
+            self.paid_at = None
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Thanh toán {self.booking.booking_code} - " f"{self.get_status_display()}"
+
+
+class Review(models.Model):
+    booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name="review", verbose_name="Đơn đặt sân")
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reviews", verbose_name="Người đánh giá"
+    )
+
+    field = models.ForeignKey(Field, on_delete=models.CASCADE, related_name="reviews", verbose_name="Sân được đánh giá")
+
+    rating = models.PositiveSmallIntegerField(verbose_name="Số sao")
+
+    comment = models.TextField(blank=True, verbose_name="Nội dung đánh giá")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đánh giá")
+
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
+
+    def clean(self):
+        super().clean()
+
+        if self.rating is not None:
+            if self.rating < 1 or self.rating > 5:
+                raise ValidationError("Số sao đánh giá phải từ 1 đến 5.")
+
+        if not self.booking_id:
+            return
+
+        if self.booking.status != Booking.Status.COMPLETED:
+            raise ValidationError("Chỉ có thể đánh giá sau khi lượt đặt sân đã hoàn thành.")
+
+        if self.user_id and self.booking.user_id != self.user_id:
+            raise ValidationError("Bạn không thể đánh giá lượt đặt sân của người khác.")
+
+        if self.field_id and self.booking.field_id != self.field_id:
+            raise ValidationError("Sân được đánh giá không khớp với lượt đặt sân.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username} - " f"{self.field.name} - " f"{self.rating}/5"
