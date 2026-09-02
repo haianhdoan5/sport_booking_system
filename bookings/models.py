@@ -10,7 +10,7 @@ from django.utils import timezone
 class Field(models.Model):
     class Type(models.TextChoices):
         BADMINTON = "BADMINTON", "Sân Cầu Lông"
-        FOOTBALL = "FOOTBALL", "Sân Bóng Đá"
+        PICKLEBALL = "PICKLEBALL", "Sân Pickleball"
 
     name = models.CharField(max_length=100, verbose_name="Tên sân")
 

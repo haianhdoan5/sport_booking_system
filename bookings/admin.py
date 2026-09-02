@@ -42,6 +42,7 @@ class FieldAdmin(admin.ModelAdmin):
         price = f"{obj.price_per_hour:,.0f}".replace(",", ".")
         return f"{price} VNĐ"
 
+    @admin.display(description="Trạng thái", boolean=False, ordering="is_active")
     def activity_status(self, obj):
         if obj.is_active:
             return format_html(
@@ -56,17 +57,17 @@ class FieldAdmin(admin.ModelAdmin):
                 "Đang mở",
             )
 
-            return format_html(
-                '<span style="'
-                "background:#fee2e2;"
-                "color:#991b1b;"
-                "padding:5px 10px;"
-                "border-radius:999px;"
-                'font-weight:700;">'
-                "{}"
-                "</span>",
-                "Tạm ngưng",
-            )
+        return format_html(
+            '<span style="'
+            "background:#fee2e2;"
+            "color:#991b1b;"
+            "padding:5px 10px;"
+            "border-radius:999px;"
+            'font-weight:700;">'
+            "{}"
+            "</span>",
+            "Tạm ngưng",
+        )
 
 
 # =========================================================

@@ -17,6 +17,7 @@ __pycache__/
 
 # Static files collected for deployment
 /staticfiles/
+/media/
 
 # Editors and operating systems
 .vscode/
