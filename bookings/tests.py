@@ -19,7 +19,8 @@ class BookingModelTests(TestCase):
             address="Quận 1, TP. Hồ Chí Minh",
             price_per_hour=Decimal("120000"),
         )
-        self.start_time = timezone.now() + timedelta(days=1)
+        booking_date = timezone.localdate() + timedelta(days=2)
+        self.start_time = timezone.make_aware(datetime.combine(booking_date, time(9)))
 
     def test_project_supports_only_two_field_types(self):
         self.assertEqual(
