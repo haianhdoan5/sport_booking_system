@@ -1,98 +1,176 @@
-{% extends "bookings/base.html" %} {% block title %} Hệ thống đặt sân thể thao {% endblock %} {% block hero %}
+{% extends "bookings/base.html" %}
+{% load static %}
+
+{% block title %}Tìm và đặt sân thể thao{% endblock %}
+
+{% block hero %}
 <section class="hero-banner">
   <div class="container">
     <div class="hero-grid">
       <div class="hero-copy">
-        <h1>Nhanh chóng, tiện lợi, đặt sân trong vài chạm.</h1>
+        <span class="hero-kicker">
+          <i class="fa-solid fa-location-dot"></i>
+          Cầu lông &amp; Pickleball
+        </span>
 
-        <p>Chọn sân, xem giá và đặt ngay với thao tác thật gọn.</p>
+        <h1>Tìm sân phù hợp, đặt lịch thật nhanh.</h1>
+
+        <p>Tìm theo tên hoặc khu vực, xem đầy đủ thông tin sân và lựa chọn nơi phù hợp với bạn.</p>
 
         <div class="hero-actions">
-          <a href="#danh-sach-san" class="btn btn-warning btn-lg fw-bold rounded-pill px-4 shadow">
-            <i class="fa-solid fa-arrow-down me-2"></i>
-            Khám phá ngay
+          <a href="#tim-san" class="btn btn-warning btn-lg fw-bold rounded-pill px-4 shadow">
+            <i class="fa-solid fa-magnifying-glass me-2"></i>
+            Tìm sân ngay
           </a>
         </div>
       </div>
 
       <div class="hero-panel">
         <div class="hero-metric">
-          <strong>{{ fields|length }}</strong>
+          <strong>{{ total_active_fields }}</strong>
           <span>Sân đang mở</span>
         </div>
 
         <div class="hero-metric hero-metric--accent">
-          <strong>Trực tuyến</strong>
-          <span>Đặt lịch nhanh, tiện lợi</span>
+          <strong>2 môn</strong>
+          <span>Cầu lông và Pickleball</span>
         </div>
 
         <div class="hero-note">
           <i class="fa-solid fa-circle-check me-2"></i>
-          Dễ xem, dễ chọn, dễ đặt.
+          Thông tin rõ ràng, lựa chọn dễ dàng.
         </div>
       </div>
     </div>
   </div>
 </section>
-{% endblock %} {% block content %}
-<div class="container page-shell mb-5" id="danh-sach-san">
-  <div class="section-heading">
-    <span class="section-tag"> Danh sách sân </span>
+{% endblock %}
 
-    <h2 class="section-title">Xem nhanh sân đang mở và đặt ngay</h2>
+{% block content %}
+<div class="container page-shell mb-5" id="tim-san">
+  <form method="get" class="field-search" role="search">
+    <div class="field-search__heading">
+      <div>
+        <span class="section-tag">Tìm sân</span>
+        <h2>Hôm nay bạn muốn chơi ở đâu?</h2>
+      </div>
+
+      {% if query or selected_type %}
+      <a href="{% url 'home' %}#tim-san" class="field-search__reset">
+        <i class="fa-solid fa-rotate-left me-1"></i>
+        Xóa bộ lọc
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-7">
+        <label for="field-search-query" class="form-label fw-bold">Tên sân hoặc khu vực</label>
+        <div class="search-input-wrap">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input
+            id="field-search-query"
+            type="search"
+            name="q"
+            class="form-control"
+            value="{{ query }}"
+            placeholder="Ví dụ: A1, Quận 7, Thủ Đức..."
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <div class="col-md-7 col-lg-3">
+        <label for="field-type-filter" class="form-label fw-bold">Loại sân</label>
+        <select id="field-type-filter" name="type" class="form-select">
+          <option value="">Tất cả loại sân</option>
+          {% for value, label in field_types %}
+          <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-5 col-lg-2">
+        <button type="submit" class="btn btn-primary w-100 fw-bold field-search__button">
+          <i class="fa-solid fa-filter me-1"></i>
+          Tìm kiếm
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="field-results-heading" id="danh-sach-san">
+    <div>
+      <span class="section-tag">Danh sách sân</span>
+      <h2 class="section-title">Sân đang sẵn sàng</h2>
+    </div>
+
+    <p>
+      Tìm thấy <strong>{{ fields|length }}</strong> sân
+      {% if query %}cho “{{ query }}”{% endif %}
+    </p>
   </div>
 
   <div class="row g-4">
     {% for field in fields %}
     <div class="col-md-6 col-xl-4">
-      <div class="card h-100 shadow-sm border-0 field-card rounded-5 overflow-hidden">
-        <div class="field-card__top">
-          <span class="badge {% if field.field_type == 'BADMINTON' %} bg-info {% else %} bg-success {% endif %} px-3 py-2 rounded-pill">
+      <article class="card h-100 shadow-sm border-0 field-card rounded-5 overflow-hidden">
+        <a href="{% url 'field_detail' field.id %}" class="field-card__media" aria-label="Xem chi tiết {{ field.name }}">
+          {% if field.image %}
+          <img src="{{ field.image.url }}" alt="Hình ảnh {{ field.name }}" loading="lazy" />
+          {% elif field.field_type == 'BADMINTON' %}
+          <img src="{% static 'bookings/images/badminton-court.svg' %}" alt="Minh họa sân cầu lông" loading="lazy" />
+          {% else %}
+          <img src="{% static 'bookings/images/pickleball-court.svg' %}" alt="Minh họa sân pickleball" loading="lazy" />
+          {% endif %}
+
+          <span class="badge field-card__type {% if field.field_type == 'BADMINTON' %}text-bg-info{% else %}text-bg-success{% endif %}">
             {% if field.field_type == 'BADMINTON' %}
             <i class="fa-solid fa-shuttlecock me-1"></i>
             {% else %}
             <i class="fa-solid fa-table-tennis-paddle-ball me-1"></i>
-            {% endif %} {{ field.get_field_type_display }}
+            {% endif %}
+            {{ field.get_field_type_display }}
           </span>
 
-          <span class="field-status is-active"> Đang mở </span>
-        </div>
+          <span class="field-status is-active">Đang mở</span>
+        </a>
 
-        <div class="card-body p-4">
-          <h3 class="card-title fw-bold text-dark mb-3">{{ field.name }}</h3>
+        <div class="card-body p-4 d-flex flex-column">
+          <h3 class="card-title fw-bold text-dark mb-2">
+            <a href="{% url 'field_detail' field.id %}">{{ field.name }}</a>
+          </h3>
 
-          <p class="field-price mb-4">
-            <span> {{ field.price_per_hour|floatformat:"0g" }} </span>
+          <p class="field-address">
+            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+            <span>{{ field.address|default:"Chưa cập nhật địa chỉ" }}</span>
+          </p>
 
+          <p class="field-description">{{ field.description|default:"Thông tin sân đang được cập nhật."|truncatechars:105 }}</p>
+
+          <p class="field-price mt-auto mb-4">
+            <span>{{ field.price_per_hour|floatformat:"0g" }}</span>
             <small>VNĐ / giờ</small>
           </p>
 
-          <div class="field-meta">
-            <div>
-              <span>Loại sân</span>
-              <strong> {{ field.get_field_type_display }} </strong>
-            </div>
-
-            <div>
-              <span>Trạng thái</span>
-              <strong>Sẵn sàng</strong>
-            </div>
+          <div class="field-card__actions">
+            <a href="{% url 'field_detail' field.id %}" class="btn btn-outline-primary fw-bold">Xem chi tiết</a>
+            <a href="{% url 'book_field' field.id %}" class="btn btn-primary fw-bold">
+              <i class="fa-regular fa-calendar-check me-1"></i>
+              Đặt sân
+            </a>
           </div>
         </div>
-
-        <div class="card-footer bg-white border-top-0 pb-4 px-4">
-          <a href="{% url 'book_field' field.id %}" class="btn btn-primary w-100 fw-bold rounded-pill py-3 shadow-sm">
-            <i class="fa-regular fa-calendar-check me-2"></i>
-            Đặt sân ngay
-          </a>
-        </div>
-      </div>
+      </article>
     </div>
     {% empty %}
-    <div class="col-12 text-center py-5">
-      <i class="fa-regular fa-folder-open text-muted fa-4x mb-3"></i>
-
-      <p class="text-muted fs-5 mb-0">Hiện tại chưa có sân nào đang nhận đặt lịch.</p>
+    <div class="col-12">
+      <div class="field-empty-state">
+        <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
+        <h3>Không tìm thấy sân phù hợp</h3>
+        <p>Hãy thử từ khóa khác hoặc chọn lại loại sân.</p>
+        <a href="{% url 'home' %}#tim-san" class="btn btn-primary fw-bold">Xem tất cả sân</a>
+      </div>
     </div>
     {% endfor %}
   </div>

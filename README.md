@@ -10,7 +10,9 @@ Mỗi bản ghi `Field` là một sân vật lý độc lập. Các booking ở 
 ## Chức năng hiện có
 
 - Đăng ký, đăng nhập và đăng xuất
-- Xem danh sách sân đang hoạt động
+- Tìm kiếm sân theo tên, địa chỉ hoặc mô tả
+- Lọc sân cầu lông và pickleball
+- Xem danh sách và thông tin chi tiết của sân đang hoạt động
 - Đặt sân và tự động tính tổng tiền theo thời lượng
 - Ngăn đặt sân trong quá khứ, khoảng giờ không hợp lệ và lịch bị trùng
 - Xem lịch sử và hủy booking đang chờ xác nhận

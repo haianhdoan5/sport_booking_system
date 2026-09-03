@@ -1,7 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
   const siteNavbar = document.querySelector(".sb-navbar");
 
-  const revealTargets = document.querySelectorAll([".hero-banner", ".hero-copy", ".hero-panel", ".section-heading", ".field-card", ".card", ".table", ".alert"].join(","));
+  const revealTargets = document.querySelectorAll(
+    [
+      ".hero-banner",
+      ".hero-copy",
+      ".hero-panel",
+      ".section-heading",
+      ".field-search",
+      ".field-card",
+      ".field-detail-card",
+      ".field-empty-state",
+      ".card",
+      ".table",
+      ".alert",
+    ].join(","),
+  );
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 

@@ -1,0 +1,65 @@
+{% extends "bookings/base.html" %}
+{% load static %}
+
+{% block title %}{{ field.name }} - SportBooking{% endblock %}
+
+{% block content %}
+<div class="container page-shell field-detail-page">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb field-breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Danh sách sân</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ field.name }}</li>
+    </ol>
+  </nav>
+
+  <article class="field-detail-card">
+    <div class="field-detail-card__media">
+      {% if field.image %}
+      <img src="{{ field.image.url }}" alt="Hình ảnh {{ field.name }}" />
+      {% elif field.field_type == 'BADMINTON' %}
+      <img src="{% static 'bookings/images/badminton-court.svg' %}" alt="Minh họa sân cầu lông" />
+      {% else %}
+      <img src="{% static 'bookings/images/pickleball-court.svg' %}" alt="Minh họa sân pickleball" />
+      {% endif %}
+    </div>
+
+    <div class="field-detail-card__content">
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+        <span class="badge {% if field.field_type == 'BADMINTON' %}text-bg-info{% else %}text-bg-success{% endif %} rounded-pill px-3 py-2">
+          {{ field.get_field_type_display }}
+        </span>
+        <span class="field-status is-active">Đang hoạt động</span>
+      </div>
+
+      <h1>{{ field.name }}</h1>
+
+      <p class="field-detail-card__address">
+        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+        {{ field.address|default:"Chưa cập nhật địa chỉ" }}
+      </p>
+
+      <div class="field-detail-card__price">
+        <span>Giá thuê sân</span>
+        <strong>{{ field.price_per_hour|floatformat:"0g" }} VNĐ</strong>
+        <small>/ giờ</small>
+      </div>
+
+      <section class="field-detail-card__description">
+        <h2>Thông tin sân</h2>
+        <p>{{ field.description|default:"Thông tin chi tiết của sân đang được cập nhật."|linebreaksbr }}</p>
+      </section>
+
+      <div class="field-detail-card__actions">
+        <a href="{% url 'book_field' field.id %}" class="btn btn-primary btn-lg fw-bold">
+          <i class="fa-regular fa-calendar-check me-2"></i>
+          Xem lịch và đặt sân
+        </a>
+        <a href="{% url 'home' %}#danh-sach-san" class="btn btn-outline-secondary btn-lg fw-bold">
+          <i class="fa-solid fa-arrow-left me-2"></i>
+          Quay lại
+        </a>
+      </div>
+    </div>
+  </article>
+</div>
+{% endblock %}
