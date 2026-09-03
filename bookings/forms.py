@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib.auth.forms import (
     AuthenticationForm,
@@ -23,6 +25,7 @@ class BookingForm(forms.ModelForm):
                     "type": "datetime-local",
                     "class": "form-control",
                     "autocomplete": "off",
+                    "step": "1800",
                 },
             ),
             "end_time": forms.DateTimeInput(
@@ -31,6 +34,7 @@ class BookingForm(forms.ModelForm):
                     "type": "datetime-local",
                     "class": "form-control",
                     "autocomplete": "off",
+                    "step": "1800",
                 },
             ),
         }
@@ -38,10 +42,31 @@ class BookingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        minimum_time = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
+        current_time = timezone.localtime()
+        rounded_time = current_time.replace(second=0, microsecond=0)
+        remaining_minutes = (-current_time.minute) % 30
+
+        if remaining_minutes or current_time.second or current_time.microsecond:
+            rounded_time += timedelta(minutes=remaining_minutes or 30)
+
+        minimum_time = rounded_time.strftime("%Y-%m-%dT%H:%M")
 
         self.fields["start_time"].widget.attrs["min"] = minimum_time
         self.fields["end_time"].widget.attrs["min"] = minimum_time
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+
+        if start_time and end_time:
+            local_start_time = timezone.localtime(start_time)
+            local_end_time = timezone.localtime(end_time)
+
+            if local_start_time.date() != local_end_time.date():
+                self.add_error("end_time", "Vui lòng chọn giờ kết thúc trong cùng ngày.")
+
+        return cleaned_data
 
 
 class LoginForm(AuthenticationForm):

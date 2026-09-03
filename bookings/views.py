@@ -1,3 +1,5 @@
+from datetime import date, datetime, time, timedelta
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -9,6 +11,71 @@ from django.views.decorators.http import require_POST
 
 from .forms import BookingForm, RegistrationForm
 from .models import Booking, Field
+
+
+SCHEDULE_START_HOUR = 7
+SCHEDULE_END_HOUR = 22
+
+
+def _selected_booking_date(request):
+    raw_date = request.POST.get("selected_date") or request.GET.get("date")
+
+    if not raw_date and request.method == "POST":
+        raw_date = request.POST.get("start_time", "")[:10]
+
+    try:
+        selected_date = date.fromisoformat(raw_date) if raw_date else timezone.localdate()
+    except ValueError:
+        selected_date = timezone.localdate()
+
+    return max(selected_date, timezone.localdate())
+
+
+def _daily_availability(field, selected_date):
+    current_timezone = timezone.get_current_timezone()
+    day_start = timezone.make_aware(datetime.combine(selected_date, time.min), current_timezone)
+    day_end = day_start + timedelta(days=1)
+    current_time = timezone.now()
+
+    occupied_bookings = list(
+        Booking.objects.filter(
+            field=field,
+            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
+            start_time__lt=day_end,
+            end_time__gt=day_start,
+        )
+        .only("start_time", "end_time")
+        .order_by("start_time")
+    )
+
+    slots = []
+
+    for hour in range(SCHEDULE_START_HOUR, SCHEDULE_END_HOUR):
+        slot_start = timezone.make_aware(datetime.combine(selected_date, time(hour=hour)), current_timezone)
+        slot_end = slot_start + timedelta(hours=1)
+        is_occupied = any(
+            booking.start_time < slot_end and booking.end_time > slot_start for booking in occupied_bookings
+        )
+        is_past = slot_start < current_time
+
+        if is_occupied:
+            status = "booked"
+        elif is_past:
+            status = "past"
+        else:
+            status = "available"
+
+        slots.append(
+            {
+                "start_label": timezone.localtime(slot_start).strftime("%H:%M"),
+                "end_label": timezone.localtime(slot_end).strftime("%H:%M"),
+                "start_value": timezone.localtime(slot_start).strftime("%Y-%m-%dT%H:%M"),
+                "end_value": timezone.localtime(slot_end).strftime("%Y-%m-%dT%H:%M"),
+                "status": status,
+            }
+        )
+
+    return slots
 
 
 def home_view(request):
@@ -51,9 +118,12 @@ def field_detail_view(request, field_id):
 @login_required
 def book_field_view(request, field_id):
     field = get_object_or_404(Field, id=field_id, is_active=True)
+    selected_date = _selected_booking_date(request)
+    availability_slots = _daily_availability(field, selected_date)
 
     if request.method == "POST":
-        form = BookingForm(request.POST)
+        booking_instance = Booking(user=request.user, field=field)
+        form = BookingForm(request.POST, instance=booking_instance)
 
         if form.is_valid():
             try:
@@ -61,7 +131,6 @@ def book_field_view(request, field_id):
                     locked_field = get_object_or_404(Field.objects.select_for_update(), id=field.id, is_active=True)
 
                     booking = form.save(commit=False)
-                    booking.user = request.user
                     booking.field = locked_field
                     booking.save()
 
@@ -70,14 +139,38 @@ def book_field_view(request, field_id):
                     form.add_error(None, error_message)
 
             else:
-                messages.success(request, f"Bạn đã đặt {field.name} thành công.")
+                formatted_price = f"{booking.total_price:,.0f}".replace(",", ".")
+                messages.success(
+                    request,
+                    f"Đặt sân thành công. Mã booking: {booking.booking_code} - Tổng tiền: {formatted_price} VNĐ.",
+                )
 
-                return redirect("home")
+                return redirect("booking_history")
 
     else:
-        form = BookingForm()
+        first_available_slot = next(
+            (slot for slot in availability_slots if slot["status"] == "available"),
+            None,
+        )
+        initial_data = {}
 
-    return render(request, "bookings/booking_form.html", {"field": field, "form": form})
+        if first_available_slot:
+            initial_data = {
+                "start_time": first_available_slot["start_value"],
+                "end_time": first_available_slot["end_value"],
+            }
+
+        form = BookingForm(initial=initial_data)
+
+    context = {
+        "field": field,
+        "form": form,
+        "selected_date": selected_date,
+        "today": timezone.localdate(),
+        "availability_slots": availability_slots,
+    }
+
+    return render(request, "bookings/booking_form.html", context)
 
 
 def register_view(request):

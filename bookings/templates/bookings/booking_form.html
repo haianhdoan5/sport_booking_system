@@ -1,53 +1,175 @@
-{% extends "bookings/base.html" %} {% block title %} Đặt sân - {{ field.name }} {% endblock %} {% block content %}
-<div class="container page-shell mt-4">
-  <div class="row justify-content-center">
-    <div class="col-lg-7 col-xl-6">
-      <div class="card shadow-sm border-0 overflow-hidden">
-        <div class="card-header bg-primary text-white p-4">
-          <h1 class="h4 mb-0">Tiến hành đặt: {{ field.name }}</h1>
-        </div>
+{% extends "bookings/base.html" %}
+{% load l10n %}
 
-        <div class="card-body p-4">
-          <p class="booking-price mb-4">
-            Đơn giá:
+{% block title %}Đặt sân - {{ field.name }}{% endblock %}
 
-            <strong> {{ field.price_per_hour|floatformat:"0g" }} VNĐ/giờ </strong>
-          </p>
+{% block content %}
+<div class="container page-shell booking-page">
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb field-breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Danh sách sân</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'field_detail' field.id %}">{{ field.name }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Đặt sân</li>
+    </ol>
+  </nav>
 
-          {% if form.non_field_errors %}
-          <div class="alert alert-danger" role="alert">
-            {% for error in form.non_field_errors %}
-            <div>{{ error }}</div>
-            {% endfor %}
-          </div>
-          {% endif %}
+  <header class="booking-heading">
+    <div>
+      <span class="section-tag">Đặt sân trực tuyến</span>
+      <h1>{{ field.name }}</h1>
+      <p>
+        <i class="fa-solid fa-location-dot me-1" aria-hidden="true"></i>
+        {{ field.address|default:"Chưa cập nhật địa chỉ" }}
+      </p>
+    </div>
 
-          <form method="post">
-            {% csrf_token %}
+    <div class="booking-heading__price">
+      <span>Đơn giá</span>
+      <strong>{{ field.price_per_hour|floatformat:"0g" }} VNĐ</strong>
+      <small>/ giờ</small>
+    </div>
+  </header>
 
-            <div class="mb-3">
-              <label for="{{ form.start_time.id_for_label }}" class="form-label fw-bold"> Thời gian bắt đầu </label>
-
-              {{ form.start_time }} {% for error in form.start_time.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-              {% endfor %}
-            </div>
-
-            <div class="mb-4">
-              <label for="{{ form.end_time.id_for_label }}" class="form-label fw-bold"> Thời gian kết thúc </label>
-
-              {{ form.end_time }} {% for error in form.end_time.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-              {% endfor %}
-            </div>
-
-            <button type="submit" class="btn btn-success w-100 fw-bold py-2">Xác nhận đặt sân</button>
-
-            <a href="{% url 'home' %}" class="btn btn-secondary w-100 mt-2 py-2"> Quay lại </a>
-          </form>
+  <div class="booking-layout">
+    <section class="booking-schedule" aria-labelledby="schedule-title">
+      <div class="booking-panel-heading">
+        <div>
+          <span>Bước 1</span>
+          <h2 id="schedule-title">Chọn ngày và xem lịch sân</h2>
         </div>
       </div>
-    </div>
+
+      <form method="get" class="booking-date-form">
+        <label for="booking-date" class="form-label fw-bold">Ngày muốn đặt</label>
+        <div class="booking-date-form__controls">
+          <input
+            id="booking-date"
+            type="date"
+            name="date"
+            class="form-control"
+            value="{{ selected_date|date:'Y-m-d' }}"
+            min="{{ today|date:'Y-m-d' }}"
+            required
+          />
+          <button type="submit" class="btn btn-outline-primary fw-bold">
+            <i class="fa-solid fa-calendar-day me-1"></i>
+            Xem lịch
+          </button>
+        </div>
+      </form>
+
+      <div class="availability-summary">
+        <strong>Lịch ngày {{ selected_date|date:"d/m/Y" }}</strong>
+        <span>Nhấn vào giờ trống để chọn nhanh.</span>
+      </div>
+
+      <div class="availability-legend" aria-label="Chú thích trạng thái lịch">
+        <span><i class="is-available"></i> Còn trống</span>
+        <span><i class="is-booked"></i> Đã đặt</span>
+        <span><i class="is-past"></i> Đã qua</span>
+      </div>
+
+      <div class="availability-grid">
+        {% for slot in availability_slots %}
+          {% if slot.status == 'available' %}
+          <button
+            type="button"
+            class="availability-slot is-available"
+            data-booking-slot
+            data-start="{{ slot.start_value }}"
+            data-end="{{ slot.end_value }}"
+            aria-label="Chọn {{ slot.start_label }} đến {{ slot.end_label }}"
+          >
+            <strong>{{ slot.start_label }}</strong>
+            <small>Trống</small>
+          </button>
+          {% elif slot.status == 'booked' %}
+          <div class="availability-slot is-booked" aria-label="{{ slot.start_label }} đến {{ slot.end_label }} đã được đặt">
+            <strong>{{ slot.start_label }}</strong>
+            <small>Đã đặt</small>
+          </div>
+          {% else %}
+          <div class="availability-slot is-past" aria-label="{{ slot.start_label }} đến {{ slot.end_label }} đã qua">
+            <strong>{{ slot.start_label }}</strong>
+            <small>Đã qua</small>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <p class="availability-note">
+        <i class="fa-solid fa-circle-info me-1" aria-hidden="true"></i>
+        Lịch hiển thị từ 07:00 đến 22:00. Bạn có thể nhập giờ kết thúc theo khoảng 30 phút ở bước 2.
+      </p>
+    </section>
+
+    <section class="booking-form-panel" aria-labelledby="booking-form-title">
+      <div class="booking-panel-heading">
+        <div>
+          <span>Bước 2</span>
+          <h2 id="booking-form-title">Xác nhận thời gian đặt</h2>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form
+        method="post"
+        class="booking-form"
+        data-booking-form
+        data-price-per-hour="{{ field.price_per_hour|unlocalize }}"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}" />
+
+        <div class="mb-3">
+          <label for="{{ form.start_time.id_for_label }}" class="form-label fw-bold">Thời gian bắt đầu</label>
+          {{ form.start_time }}
+          {% for error in form.start_time.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.end_time.id_for_label }}" class="form-label fw-bold">Thời gian kết thúc</label>
+          {{ form.end_time }}
+          {% for error in form.end_time.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="booking-price-preview" data-booking-price-preview>
+          <div>
+            <span>Thời lượng dự kiến</span>
+            <strong data-booking-duration>—</strong>
+          </div>
+          <div>
+            <span>Tổng tiền dự kiến</span>
+            <strong data-booking-total>—</strong>
+          </div>
+          <p data-booking-price-message>Chọn thời gian để xem tổng tiền.</p>
+        </div>
+
+        <div class="booking-rules">
+          <p><i class="fa-solid fa-check"></i> Giờ kết thúc phải sau giờ bắt đầu.</p>
+          <p><i class="fa-solid fa-check"></i> Hai thời điểm phải trong cùng một ngày.</p>
+          <p><i class="fa-solid fa-check"></i> Hệ thống sẽ từ chối nếu lịch bị trùng.</p>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">
+          <i class="fa-solid fa-shield-check me-2"></i>
+          Xác nhận đặt sân
+        </button>
+
+        <a href="{% url 'field_detail' field.id %}" class="btn btn-outline-secondary w-100 mt-2 fw-bold">Quay lại chi tiết sân</a>
+      </form>
+    </section>
   </div>
 </div>
 {% endblock %}

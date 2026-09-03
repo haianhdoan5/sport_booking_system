@@ -13,6 +13,7 @@ Mỗi bản ghi `Field` là một sân vật lý độc lập. Các booking ở 
 - Tìm kiếm sân theo tên, địa chỉ hoặc mô tả
 - Lọc sân cầu lông và pickleball
 - Xem danh sách và thông tin chi tiết của sân đang hoạt động
+- Xem lịch sân theo ngày và chọn nhanh khung giờ còn trống
 - Đặt sân và tự động tính tổng tiền theo thời lượng
 - Ngăn đặt sân trong quá khứ, khoảng giờ không hợp lệ và lịch bị trùng
 - Xem lịch sử và hủy booking đang chờ xác nhận
@@ -41,12 +42,13 @@ python manage.py runserver
 Website: `http://127.0.0.1:8000/`  
 Admin: `http://127.0.0.1:8000/admin/`
 
-Tài khoản khách hàng được tạo bởi lệnh seed:
+Trước khi chạy `seed_demo --with-bookings`, đặt mật khẩu demo riêng trong file `.env` cục bộ:
 
-```text
-Tên đăng nhập: demo
-Mật khẩu: Demo@12345
+```env
+DEMO_PASSWORD=mat-khau-demo-cua-ban
 ```
+
+Lệnh seed sẽ tạo tài khoản có tên đăng nhập `demo`; mật khẩu không được lưu trong Git.
 
 ## Chạy nhanh bằng SQLite
 

@@ -1,8 +1,9 @@
+import os
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from bookings.models import Booking, Field
@@ -93,6 +94,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        demo_password = os.getenv("DEMO_PASSWORD")
+
+        if options["with_bookings"] and not demo_password:
+            raise CommandError("Hãy đặt DEMO_PASSWORD trong file .env trước khi tạo booking demo.")
+
         fields = []
 
         for data in FIELDS:
@@ -105,18 +111,18 @@ class Command(BaseCommand):
             self.stdout.write(f"{action}: {field.name}")
 
         if options["with_bookings"]:
-            self._create_bookings(fields)
+            self._create_bookings(fields, demo_password)
 
         self.stdout.write(self.style.SUCCESS("Dữ liệu demo đã sẵn sàng."))
 
-    def _create_bookings(self, fields):
+    def _create_bookings(self, fields, demo_password):
         user_model = get_user_model()
         user, created = user_model.objects.get_or_create(username="demo")
 
         if created:
-            user.set_password("Demo@12345")
+            user.set_password(demo_password)
             user.save(update_fields=["password"])
-            self.stdout.write("Tạo tài khoản demo: demo / Demo@12345")
+            self.stdout.write("Đã tạo tài khoản demo với mật khẩu lấy từ DEMO_PASSWORD.")
 
         tomorrow = timezone.localdate() + timedelta(days=1)
         slots = [

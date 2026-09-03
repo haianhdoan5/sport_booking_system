@@ -78,6 +78,12 @@ class Booking(models.Model):
         if self.start_time >= self.end_time:
             raise ValidationError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
 
+        local_start_time = timezone.localtime(self.start_time)
+        local_end_time = timezone.localtime(self.end_time)
+
+        if local_start_time.date() != local_end_time.date():
+            raise ValidationError("Thời gian bắt đầu và kết thúc phải trong cùng một ngày.")
+
         # Chỉ kiểm tra thời gian quá khứ khi tạo booking mới.
         if self._state.adding and self.start_time < timezone.now():
             raise ValidationError("Không thể đặt sân trong quá khứ.")
