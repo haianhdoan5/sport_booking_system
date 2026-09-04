@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container page-shell history-page">
-  <div class="history-heading reveal">
+  <div class="history-heading">
     <div>
       <span class="section-eyebrow">Tài khoản của tôi</span>
       <h1>Lịch sử đặt sân</h1>
@@ -15,7 +15,7 @@
     </a>
   </div>
 
-  <div class="history-summary reveal" aria-label="Tổng hợp booking">
+  <div class="history-summary" aria-label="Tổng hợp booking">
     <a href="{% url 'booking_history' %}" class="history-summary__item {% if not selected_status %}is-active{% endif %}">
       <span>Tất cả</span><strong>{{ summary.total }}</strong>
     </a>
@@ -33,7 +33,7 @@
     </a>
   </div>
 
-  <div class="history-card reveal">
+  <div class="history-card">
     <div class="history-card__header">
       <div>
         <h2>Danh sách booking</h2>
