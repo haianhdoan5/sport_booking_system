@@ -13,4 +13,5 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("history/", views.booking_history_view, name="booking_history"),
     path("cancel/<int:booking_id>/", views.cancel_booking_view, name="cancel_booking"),
+    path("dashboard/", views.admin_dashboard_view, name="admin_dashboard"),
 ]

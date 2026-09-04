@@ -285,3 +285,125 @@ class BookingFlowTests(TestCase):
         )
 
         self.assertEqual(response.context["selected_date"], timezone.localdate())
+
+
+class BookingManagementTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(username="history-user")
+        self.other_user = user_model.objects.create_user(username="other-user")
+        self.staff_user = user_model.objects.create_user(username="staff-user", is_staff=True)
+        self.field = Field.objects.create(
+            name="Sân cầu lông Quản lý A1",
+            field_type=Field.Type.BADMINTON,
+            address="Quận 3, TP. Hồ Chí Minh",
+            price_per_hour=Decimal("120000"),
+        )
+        booking_date = timezone.localdate() + timedelta(days=3)
+        self.start_time = timezone.make_aware(datetime.combine(booking_date, time(8)))
+
+    def create_booking(self, user=None, status=Booking.Status.PENDING, hour_offset=0):
+        start_time = self.start_time + timedelta(hours=hour_offset)
+
+        return Booking.objects.create(
+            user=user or self.user,
+            field=self.field,
+            start_time=start_time,
+            end_time=start_time + timedelta(hours=1),
+            status=status,
+        )
+
+    def test_history_only_shows_current_users_bookings(self):
+        own_booking = self.create_booking()
+        other_booking = self.create_booking(user=self.other_user, hour_offset=2)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("booking_history"))
+
+        self.assertEqual(list(response.context["bookings"]), [own_booking])
+        self.assertContains(response, own_booking.booking_code)
+        self.assertNotContains(response, other_booking.booking_code)
+
+    def test_history_filters_by_status_and_keeps_full_summary(self):
+        pending_booking = self.create_booking()
+        completed_booking = self.create_booking(status=Booking.Status.COMPLETED, hour_offset=2)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("booking_history"), {"status": Booking.Status.COMPLETED})
+
+        self.assertEqual(list(response.context["bookings"]), [completed_booking])
+        self.assertEqual(response.context["selected_status"], Booking.Status.COMPLETED)
+        self.assertEqual(response.context["summary"]["total"], 2)
+        self.assertEqual(response.context["summary"]["pending"], 1)
+        self.assertNotContains(response, pending_booking.booking_code)
+
+    def test_history_ignores_unknown_status(self):
+        booking = self.create_booking()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("booking_history"), {"status": "UNKNOWN"})
+
+        self.assertEqual(response.context["selected_status"], "")
+        self.assertEqual(list(response.context["bookings"]), [booking])
+
+    def test_owner_can_cancel_pending_booking(self):
+        booking = self.create_booking()
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse("cancel_booking", args=[booking.id]))
+
+        self.assertRedirects(response, reverse("booking_history"))
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.CANCELLED)
+
+    def test_confirmed_booking_cannot_be_cancelled(self):
+        booking = self.create_booking(status=Booking.Status.CONFIRMED)
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse("cancel_booking", args=[booking.id]))
+
+        self.assertRedirects(response, reverse("booking_history"))
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.CONFIRMED)
+
+    def test_user_cannot_cancel_another_users_booking(self):
+        booking = self.create_booking(user=self.other_user)
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse("cancel_booking", args=[booking.id]))
+
+        self.assertEqual(response.status_code, 404)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.PENDING)
+
+    def test_cancel_booking_rejects_get_request(self):
+        booking = self.create_booking()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cancel_booking", args=[booking.id]))
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_dashboard_redirects_non_staff_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("admin_dashboard"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("admin:login"), response.url)
+
+    def test_dashboard_reports_real_booking_metrics(self):
+        self.create_booking(status=Booking.Status.PENDING)
+        self.create_booking(status=Booking.Status.COMPLETED, hour_offset=2)
+        self.create_booking(status=Booking.Status.CANCELLED, hour_offset=4)
+        self.client.force_login(self.staff_user)
+
+        response = self.client.get(reverse("admin_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_fields"], 1)
+        self.assertEqual(response.context["active_fields"], 1)
+        self.assertEqual(response.context["total_bookings"], 3)
+        self.assertEqual(response.context["pending_bookings"], 1)
+        self.assertEqual(response.context["completed_revenue"], Decimal("120000.00"))
+        self.assertEqual(response.context["popular_fields"][0].booking_count, 2)

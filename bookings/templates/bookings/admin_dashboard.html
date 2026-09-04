@@ -1,0 +1,65 @@
+{% extends "bookings/base.html" %}
+
+{% block title %}Thống kê quản trị{% endblock %}
+
+{% block content %}
+<div class="container page-shell dashboard-page">
+  <div class="dashboard-heading reveal">
+    <div>
+      <span class="section-eyebrow">Khu vực quản trị</span>
+      <h1>Tổng quan hệ thống</h1>
+      <p>Số liệu cập nhật từ dữ liệu booking thực tế ngày {{ today|date:"d/m/Y" }}.</p>
+    </div>
+    <a href="{% url 'admin:index' %}" class="btn sb-btn-accent"><i class="fa-solid fa-gear me-2"></i>Mở Django Admin</a>
+  </div>
+
+  <div class="dashboard-metrics reveal">
+    <article class="metric-card"><span class="metric-card__icon metric-card__icon--blue"><i class="fa-solid fa-table-tennis-paddle-ball"></i></span><div><small>Tổng số sân</small><strong>{{ total_fields }}</strong><span>{{ active_fields }} sân đang hoạt động</span></div></article>
+    <article class="metric-card"><span class="metric-card__icon metric-card__icon--green"><i class="fa-solid fa-calendar-check"></i></span><div><small>Tổng booking</small><strong>{{ total_bookings }}</strong><span>{{ today_bookings }} lượt diễn ra hôm nay</span></div></article>
+    <article class="metric-card"><span class="metric-card__icon metric-card__icon--orange"><i class="fa-regular fa-clock"></i></span><div><small>Chờ xác nhận</small><strong>{{ pending_bookings }}</strong><span>Cần quản trị viên xử lý</span></div></article>
+    <article class="metric-card"><span class="metric-card__icon metric-card__icon--purple"><i class="fa-solid fa-coins"></i></span><div><small>Doanh thu hoàn tất</small><strong>{{ completed_revenue|floatformat:"0g" }}</strong><span>VNĐ từ booking hoàn thành</span></div></article>
+  </div>
+
+  <div class="dashboard-grid">
+    <section class="dashboard-panel reveal">
+      <div class="dashboard-panel__heading"><div><span class="section-eyebrow">Trạng thái</span><h2>Phân bố booking</h2></div></div>
+      <div class="status-breakdown">
+        {% for item in status_cards %}
+        <div class="status-breakdown__row"><span class="status-dot status-dot--{{ item.value|lower }}"></span><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="dashboard-panel reveal">
+      <div class="dashboard-panel__heading"><div><span class="section-eyebrow">Mức độ quan tâm</span><h2>Sân được đặt nhiều</h2></div></div>
+      <ol class="popular-fields">
+        {% for field in popular_fields %}
+        <li><span class="popular-fields__rank">{{ forloop.counter }}</span><div><strong>{{ field.name }}</strong><small>{{ field.get_field_type_display }}</small></div><span class="popular-fields__count">{{ field.booking_count }} lượt</span></li>
+        {% empty %}<li class="text-muted">Chưa có dữ liệu booking.</li>{% endfor %}
+      </ol>
+    </section>
+  </div>
+
+  <section class="dashboard-panel dashboard-panel--wide reveal">
+    <div class="dashboard-panel__heading">
+      <div><span class="section-eyebrow">Lịch sắp tới</span><h2>Booking cần theo dõi</h2></div>
+      <a href="{% url 'admin:bookings_booking_changelist' %}">Quản lý tất cả <i class="fa-solid fa-arrow-right ms-1"></i></a>
+    </div>
+    {% if upcoming_bookings %}
+    <div class="table-responsive">
+      <table class="table dashboard-table align-middle mb-0">
+        <thead><tr><th>Mã</th><th>Khách hàng</th><th>Sân</th><th>Thời gian</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          {% for booking in upcoming_bookings %}
+          <tr>
+            <td><span class="booking-code">{{ booking.booking_code }}</span></td><td>{{ booking.user.username }}</td><td><strong>{{ booking.field.name }}</strong></td><td>{{ booking.start_time|date:"H:i d/m/Y" }}</td>
+            <td>{% if booking.status == 'PENDING' %}<span class="status-pill status-pill--pending">Chờ xác nhận</span>{% else %}<span class="status-pill status-pill--confirmed">Đã xác nhận</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="dashboard-empty">Chưa có booking sắp tới cần theo dõi.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

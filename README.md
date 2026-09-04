@@ -17,6 +17,8 @@ Mỗi bản ghi `Field` là một sân vật lý độc lập. Các booking ở 
 - Đặt sân và tự động tính tổng tiền theo thời lượng
 - Ngăn đặt sân trong quá khứ, khoảng giờ không hợp lệ và lịch bị trùng
 - Xem lịch sử và hủy booking đang chờ xác nhận
+- Lọc lịch sử theo trạng thái và theo dõi số lượng booking cá nhân
+- Xem dashboard thống kê dành riêng cho quản trị viên
 - Quản lý sân, booking, thanh toán và đánh giá qua Django Admin
 
 ## Cài đặt
@@ -41,6 +43,7 @@ python manage.py runserver
 
 Website: `http://127.0.0.1:8000/`  
 Admin: `http://127.0.0.1:8000/admin/`
+Dashboard quản trị: `http://127.0.0.1:8000/dashboard/`
 
 Trước khi chạy `seed_demo --with-bookings`, đặt mật khẩu demo riêng trong file `.env` cục bộ:
 

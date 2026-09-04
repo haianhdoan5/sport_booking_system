@@ -47,6 +47,13 @@
             Lịch sử
           </a>
 
+          {% if user.is_staff %}
+          <a href="{% url 'admin_dashboard' %}" class="btn btn-sm sb-btn-soft me-1">
+            <i class="fa-solid fa-chart-line me-1"></i>
+            Thống kê
+          </a>
+          {% endif %}
+
           <form method="post" action="{% url 'logout' %}" class="m-0">
             {% csrf_token %}
 
