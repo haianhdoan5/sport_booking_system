@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container page-shell dashboard-page">
-  <div class="dashboard-heading reveal">
+  <div class="dashboard-heading">
     <div>
       <span class="section-eyebrow">Khu vực quản trị</span>
       <h1>Tổng quan hệ thống</h1>
@@ -13,7 +13,7 @@
     <a href="{% url 'admin:index' %}" class="btn sb-btn-accent"><i class="fa-solid fa-gear me-2"></i>Mở Django Admin</a>
   </div>
 
-  <div class="dashboard-metrics reveal">
+  <div class="dashboard-metrics">
     <article class="metric-card"><span class="metric-card__icon metric-card__icon--blue"><i class="fa-solid fa-table-tennis-paddle-ball"></i></span><div><small>Tổng số sân</small><strong>{{ total_fields }}</strong><span>{{ active_fields }} sân đang hoạt động</span></div></article>
     <article class="metric-card"><span class="metric-card__icon metric-card__icon--green"><i class="fa-solid fa-calendar-check"></i></span><div><small>Tổng booking</small><strong>{{ total_bookings }}</strong><span>{{ today_bookings }} lượt diễn ra hôm nay</span></div></article>
     <article class="metric-card"><span class="metric-card__icon metric-card__icon--orange"><i class="fa-regular fa-clock"></i></span><div><small>Chờ xác nhận</small><strong>{{ pending_bookings }}</strong><span>Cần quản trị viên xử lý</span></div></article>
@@ -21,7 +21,7 @@
   </div>
 
   <div class="dashboard-grid">
-    <section class="dashboard-panel reveal">
+    <section class="dashboard-panel">
       <div class="dashboard-panel__heading"><div><span class="section-eyebrow">Trạng thái</span><h2>Phân bố booking</h2></div></div>
       <div class="status-breakdown">
         {% for item in status_cards %}
@@ -30,7 +30,7 @@
       </div>
     </section>
 
-    <section class="dashboard-panel reveal">
+    <section class="dashboard-panel">
       <div class="dashboard-panel__heading"><div><span class="section-eyebrow">Mức độ quan tâm</span><h2>Sân được đặt nhiều</h2></div></div>
       <ol class="popular-fields">
         {% for field in popular_fields %}
@@ -40,7 +40,7 @@
     </section>
   </div>
 
-  <section class="dashboard-panel dashboard-panel--wide reveal">
+  <section class="dashboard-panel dashboard-panel--wide">
     <div class="dashboard-panel__heading">
       <div><span class="section-eyebrow">Lịch sắp tới</span><h2>Booking cần theo dõi</h2></div>
       <a href="{% url 'admin:bookings_booking_changelist' %}">Quản lý tất cả <i class="fa-solid fa-arrow-right ms-1"></i></a>
