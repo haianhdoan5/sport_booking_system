@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const revealTargets = document.querySelectorAll(
     [
+      ".reveal",
       ".hero-banner",
       ".hero-copy",
       ".hero-panel",
