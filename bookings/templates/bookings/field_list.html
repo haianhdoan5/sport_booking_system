@@ -3,6 +3,21 @@
 
 {% block title %}Tìm và đặt sân thể thao{% endblock %}
 
+{% block extra_css %}
+<style>
+  .hero-banner {
+    background:
+      linear-gradient(rgba(12, 19, 36, 0.45), rgba(12, 19, 36, 0.45)),
+      url("{% static 'bookings/images/navbar_bg.jpg' %}") center / cover no-repeat !important;
+  }
+
+  .hero-banner::before,
+  .hero-banner::after {
+    display: none;
+  }
+</style>
+{% endblock %}
+
 {% block hero %}
 <section class="hero-banner">
   <div class="container">
