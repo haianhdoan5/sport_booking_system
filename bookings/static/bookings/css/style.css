@@ -25,8 +25,11 @@ body {
 }
 
 .sb-navbar {
-  background: rgba(11, 18, 32, 0.72);
-  backdrop-filter: blur(18px);
+  background-image: url("../images/navbar_bg.jpg") !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0.85rem 0;
   transform: translateY(0);
@@ -793,9 +796,7 @@ input[type="datetime-local"]:focus {
   overflow: hidden;
   border-radius: 28px;
   color: #fff;
-  background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%),
-    linear-gradient(135deg, #0c1428, var(--sb-primary) 58%, var(--sb-accent));
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%), linear-gradient(135deg, #0c1428, var(--sb-primary) 58%, var(--sb-accent));
   box-shadow: var(--sb-shadow);
 }
 
@@ -1462,10 +1463,22 @@ button.availability-slot.is-selected {
   font-size: 1.1rem;
 }
 
-.metric-card__icon--blue { color: #0f5bd6; background: #e7f0ff; }
-.metric-card__icon--green { color: #0f9d58; background: #e1f7ec; }
-.metric-card__icon--orange { color: #b66a00; background: #fff0d5; }
-.metric-card__icon--purple { color: #7047b8; background: #f0e9ff; }
+.metric-card__icon--blue {
+  color: #0f5bd6;
+  background: #e7f0ff;
+}
+.metric-card__icon--green {
+  color: #0f9d58;
+  background: #e1f7ec;
+}
+.metric-card__icon--orange {
+  color: #b66a00;
+  background: #fff0d5;
+}
+.metric-card__icon--purple {
+  color: #7047b8;
+  background: #f0e9ff;
+}
 
 .metric-card small,
 .metric-card span {
@@ -1525,10 +1538,18 @@ button.availability-slot.is-selected {
   border-radius: 50%;
 }
 
-.status-dot--pending { background: #f2b84b; }
-.status-dot--confirmed { background: #0f9d58; }
-.status-dot--completed { background: #0f5bd6; }
-.status-dot--cancelled { background: #dc3545; }
+.status-dot--pending {
+  background: #f2b84b;
+}
+.status-dot--confirmed {
+  background: #0f9d58;
+}
+.status-dot--completed {
+  background: #0f5bd6;
+}
+.status-dot--cancelled {
+  background: #dc3545;
+}
 
 .popular-fields li {
   display: grid;
