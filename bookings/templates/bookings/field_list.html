@@ -1,9 +1,4 @@
-{% extends "bookings/base.html" %}
-{% load static %}
-
-{% block title %}Tìm và đặt sân thể thao{% endblock %}
-
-{% block extra_css %}
+{% extends "bookings/base.html" %} {% load static %} {% block title %}Tìm và đặt sân thể thao{% endblock %} {% block extra_css %}
 <style>
   .hero-banner {
     background:
@@ -16,9 +11,7 @@
     display: none;
   }
 </style>
-{% endblock %}
-
-{% block hero %}
+{% endblock %} {% block hero %}
 <section class="hero-banner">
   <div class="container">
     <div class="hero-grid">
@@ -59,9 +52,7 @@
     </div>
   </div>
 </section>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <div class="container page-shell mb-5" id="tim-san">
   <form method="get" class="field-search" role="search">
     <div class="field-search__heading">
@@ -80,28 +71,26 @@
 
     <div class="row g-3 align-items-end">
       <div class="col-lg-7">
-        <label for="field-search-query" class="form-label fw-bold">Tên sân hoặc khu vực</label>
+        <label for="field-search-query" class="form-label fw-bold"> Tên sân hoặc khu vực </label>
+
         <div class="search-input-wrap">
           <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input
-            id="field-search-query"
-            type="search"
-            name="q"
-            class="form-control"
-            value="{{ query }}"
-            placeholder="Ví dụ: A1, Quận 7, Thủ Đức..."
-            autocomplete="off"
-          />
+
+          <input id="field-search-query" type="search" name="q" class="form-control" value="{{ query }}" placeholder="Ví dụ: A1, Quận 7, Thủ Đức..." autocomplete="off" />
         </div>
       </div>
 
       <div class="col-md-7 col-lg-3">
-        <label for="field-type-filter" class="form-label fw-bold">Loại sân</label>
+        <label for="field-type-filter" class="form-label fw-bold"> Loại sân </label>
+
         <select id="field-type-filter" name="type" class="form-select">
           <option value="">Tất cả loại sân</option>
-          {% for value, label in field_types %}
-          <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
+
+          {% for value, label in field_types %} {% if selected_type == value %}
+          <option value="{{ value }}" selected>{{ label }}</option>
+          {% else %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endif %} {% endfor %}
         </select>
       </div>
 
@@ -120,10 +109,7 @@
       <h2 class="section-title">Sân đang sẵn sàng</h2>
     </div>
 
-    <p>
-      Tìm thấy <strong>{{ fields|length }}</strong> sân
-      {% if query %}cho “{{ query }}”{% endif %}
-    </p>
+    <p>Tìm thấy <strong>{{ fields|length }}</strong> sân {% if query %}cho “{{ query }}”{% endif %}</p>
   </div>
 
   <div class="row g-4">
@@ -131,45 +117,79 @@
     <div class="col-md-6 col-xl-4">
       <article class="card h-100 shadow-sm border-0 field-card rounded-5 overflow-hidden">
         <a href="{% url 'field_detail' field.id %}" class="field-card__media" aria-label="Xem chi tiết {{ field.name }}">
-          {% if field.image %}
+          {% if field.name == 'A1' %}
+          <img src="{% static 'bookings/images/CL_1.jpg' %}" alt="Hình ảnh sân A1" loading="lazy" />
+
+          {% elif field.name == 'A2' %}
+          <img src="{% static 'bookings/images/CL_2.jpg' %}" alt="Hình ảnh sân A2" loading="lazy" />
+
+          {% elif field.name == 'A3' %}
+          <img src="{% static 'bookings/images/CL_3.jpg' %}" alt="Hình ảnh sân A3" loading="lazy" />
+
+          {% elif field.name == 'A4' %}
+          <img src="{% static 'bookings/images/CL_4.jpg' %}" alt="Hình ảnh sân A4" loading="lazy" />
+
+          {% elif field.name == 'A5' %}
+          <img src="{% static 'bookings/images/CL_5.jpg' %}" alt="Hình ảnh sân A5" loading="lazy" />
+
+          {% elif field.name == 'P1' %}
+          <img src="{% static 'bookings/images/PB_1.jpg' %}" alt="Hình ảnh sân P1" loading="lazy" />
+
+          {% elif field.name == 'P2' %}
+          <img src="{% static 'bookings/images/PB_2.jpg' %}" alt="Hình ảnh sân P2" loading="lazy" />
+
+          {% elif field.name == 'P3' %}
+          <img src="{% static 'bookings/images/PB_3.jpg' %}" alt="Hình ảnh sân P3" loading="lazy" />
+
+          {% elif field.name == 'P4' %}
+          <img src="{% static 'bookings/images/PB_4.jpg' %}" alt="Hình ảnh sân P4" loading="lazy" />
+
+          {% elif field.name == 'P5' %}
+          <img src="{% static 'bookings/images/PB_5.jpg' %}" alt="Hình ảnh sân P5" loading="lazy" />
+
+          {% elif field.image %}
           <img src="{{ field.image.url }}" alt="Hình ảnh {{ field.name }}" loading="lazy" />
+
           {% elif field.field_type == 'BADMINTON' %}
           <img src="{% static 'bookings/images/badminton-court.svg' %}" alt="Minh họa sân cầu lông" loading="lazy" />
+
           {% else %}
           <img src="{% static 'bookings/images/pickleball-court.svg' %}" alt="Minh họa sân pickleball" loading="lazy" />
           {% endif %}
 
-          <span class="badge field-card__type {% if field.field_type == 'BADMINTON' %}text-bg-info{% else %}text-bg-success{% endif %}">
+          <span class="badge field-card__type {% if field.field_type == 'BADMINTON' %} text-bg-info {% else %} text-bg-success {% endif %}">
             {% if field.field_type == 'BADMINTON' %}
             <i class="fa-solid fa-shuttlecock me-1"></i>
             {% else %}
             <i class="fa-solid fa-table-tennis-paddle-ball me-1"></i>
-            {% endif %}
-            {{ field.get_field_type_display }}
+            {% endif %} {{ field.get_field_type_display }}
           </span>
 
-          <span class="field-status is-active">Đang mở</span>
+          <span class="field-status is-active"> Đang mở </span>
         </a>
 
         <div class="card-body p-4 d-flex flex-column">
           <h3 class="card-title fw-bold text-dark mb-2">
-            <a href="{% url 'field_detail' field.id %}">{{ field.name }}</a>
+            <a href="{% url 'field_detail' field.id %}"> {{ field.name }} </a>
           </h3>
 
           <p class="field-address">
             <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-            <span>{{ field.address|default:"Chưa cập nhật địa chỉ" }}</span>
+
+            <span> {{ field.address|default:"Chưa cập nhật địa chỉ" }} </span>
           </p>
 
           <p class="field-description">{{ field.description|default:"Thông tin sân đang được cập nhật."|truncatechars:105 }}</p>
 
           <p class="field-price mt-auto mb-4">
-            <span>{{ field.price_per_hour|floatformat:"0g" }}</span>
+            <span> {{ field.price_per_hour|floatformat:"0g" }} </span>
+
             <small>VNĐ / giờ</small>
           </p>
 
           <div class="field-card__actions">
-            <a href="{% url 'field_detail' field.id %}" class="btn btn-outline-primary fw-bold">Xem chi tiết</a>
+            <a href="{% url 'field_detail' field.id %}" class="btn btn-outline-primary fw-bold"> Xem chi tiết </a>
+
             <a href="{% url 'book_field' field.id %}" class="btn btn-primary fw-bold">
               <i class="fa-regular fa-calendar-check me-1"></i>
               Đặt sân
@@ -178,13 +198,17 @@
         </div>
       </article>
     </div>
+
     {% empty %}
     <div class="col-12">
       <div class="field-empty-state">
         <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
+
         <h3>Không tìm thấy sân phù hợp</h3>
+
         <p>Hãy thử từ khóa khác hoặc chọn lại loại sân.</p>
-        <a href="{% url 'home' %}#tim-san" class="btn btn-primary fw-bold">Xem tất cả sân</a>
+
+        <a href="{% url 'home' %}#tim-san" class="btn btn-primary fw-bold"> Xem tất cả sân </a>
       </div>
     </div>
     {% endfor %}
