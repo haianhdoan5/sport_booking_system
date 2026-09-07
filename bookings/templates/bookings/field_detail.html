@@ -14,7 +14,27 @@
 
   <article class="field-detail-card">
     <div class="field-detail-card__media">
-      {% if field.image %}
+      {% if 'A1' in field.name %}
+      <img src="{% static 'bookings/images/CL_1.jpeg' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'A2' in field.name %}
+      <img src="{% static 'bookings/images/CL_2.png' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'A3' in field.name %}
+      <img src="{% static 'bookings/images/CL_3.webp' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'A4' in field.name %}
+      <img src="{% static 'bookings/images/CL_4.jpg' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'A5' in field.name %}
+      <img src="{% static 'bookings/images/CL_5.jpg' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'P1' in field.name %}
+      <img src="{% static 'bookings/images/PB_1.jpg' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'P2' in field.name %}
+      <img src="{% static 'bookings/images/PB_2.jpg' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'P3' in field.name %}
+      <img src="{% static 'bookings/images/PB_3.jfif' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'P4' in field.name %}
+      <img src="{% static 'bookings/images/PB_4.png' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif 'P5' in field.name %}
+      <img src="{% static 'bookings/images/PB_5.png' %}" alt="Hình ảnh {{ field.name }}" />
+      {% elif field.image %}
       <img src="{{ field.image.url }}" alt="Hình ảnh {{ field.name }}" />
       {% elif field.field_type == 'BADMINTON' %}
       <img src="{% static 'bookings/images/badminton-court.svg' %}" alt="Minh họa sân cầu lông" />
