@@ -13,7 +13,14 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-    <link rel="stylesheet" href="{% static 'bookings/css/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'bookings/css/style.css' %}?v=3" />
+
+    <style>
+      .sb-navbar {
+        background: rgba(11, 18, 32, 0.72) !important;
+        backdrop-filter: blur(18px);
+      }
+    </style>
 
     {% block extra_css %}{% endblock %}
   </head>
