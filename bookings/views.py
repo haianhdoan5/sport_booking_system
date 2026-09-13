@@ -31,49 +31,56 @@ def _selected_booking_date(request):
     except ValueError:
         selected_date = timezone.localdate()
 
-    return max(selected_date, timezone.localdate())
+    if selected_date < timezone.localdate():
+        selected_date = timezone.localdate()
+
+    return selected_date
 
 
 def _daily_availability(field, selected_date):
-    current_timezone = timezone.get_current_timezone()
-    day_start = timezone.make_aware(datetime.combine(selected_date, time.min), current_timezone)
+    tz = timezone.get_current_timezone()
+    day_start = timezone.make_aware(datetime.combine(selected_date, time.min), tz)
     day_end = day_start + timedelta(days=1)
-    current_time = timezone.now()
+    now = timezone.now()
 
-    occupied_bookings = list(
-        Booking.objects.filter(
-            field=field,
-            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
-            start_time__lt=day_end,
-            end_time__gt=day_start,
-        )
-        .only("start_time", "end_time")
-        .order_by("start_time")
-    )
+    bookings = Booking.objects.filter(
+        field=field,
+        status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED],
+        start_time__lt=day_end,
+        end_time__gt=day_start,
+    ).order_by("start_time")
 
     slots = []
 
     for hour in range(SCHEDULE_START_HOUR, SCHEDULE_END_HOUR):
-        slot_start = timezone.make_aware(datetime.combine(selected_date, time(hour=hour)), current_timezone)
-        slot_end = slot_start + timedelta(hours=1)
-        is_occupied = any(
-            booking.start_time < slot_end and booking.end_time > slot_start for booking in occupied_bookings
+        slot_start = timezone.make_aware(
+            datetime.combine(selected_date, time(hour=hour)),
+            tz,
         )
-        is_past = slot_start < current_time
+        slot_end = slot_start + timedelta(hours=1)
 
-        if is_occupied:
+        occupied = False
+        for booking in bookings:
+            if booking.start_time < slot_end and booking.end_time > slot_start:
+                occupied = True
+                break
+
+        if occupied:
             status = "booked"
-        elif is_past:
+        elif slot_start < now:
             status = "past"
         else:
             status = "available"
 
+        local_start = timezone.localtime(slot_start)
+        local_end = timezone.localtime(slot_end)
+
         slots.append(
             {
-                "start_label": timezone.localtime(slot_start).strftime("%H:%M"),
-                "end_label": timezone.localtime(slot_end).strftime("%H:%M"),
-                "start_value": timezone.localtime(slot_start).strftime("%Y-%m-%dT%H:%M"),
-                "end_value": timezone.localtime(slot_end).strftime("%Y-%m-%dT%H:%M"),
+                "start_label": local_start.strftime("%H:%M"),
+                "end_label": local_end.strftime("%H:%M"),
+                "start_value": local_start.strftime("%Y-%m-%dT%H:%M"),
+                "end_value": local_end.strftime("%Y-%m-%dT%H:%M"),
                 "status": status,
             }
         )
@@ -84,25 +91,24 @@ def _daily_availability(field, selected_date):
 def home_view(request):
     query = request.GET.get("q", "").strip()
     selected_type = request.GET.get("type", "").strip().upper()
-    valid_field_types = {value for value, _label in Field.Type.choices}
-
     active_fields = Field.objects.filter(is_active=True)
     total_active_fields = active_fields.count()
 
     if query:
         active_fields = active_fields.filter(
-            Q(name__icontains=query) | Q(address__icontains=query) | Q(description__icontains=query)
+            Q(name__icontains=query)
+            | Q(address__icontains=query)
+            | Q(description__icontains=query)
         )
 
-    if selected_type in valid_field_types:
+    valid_types = [value for value, label in Field.Type.choices]
+    if selected_type in valid_types:
         active_fields = active_fields.filter(field_type=selected_type)
     else:
         selected_type = ""
 
-    active_fields = active_fields.order_by("field_type", "name")
-
     context = {
-        "fields": active_fields,
+        "fields": active_fields.order_by("field_type", "name"),
         "field_types": Field.Type.choices,
         "query": query,
         "selected_type": selected_type,
@@ -114,7 +120,6 @@ def home_view(request):
 
 def field_detail_view(request, field_id):
     field = get_object_or_404(Field, id=field_id, is_active=True)
-
     return render(request, "bookings/field_detail.html", {"field": field})
 
 
@@ -131,37 +136,36 @@ def book_field_view(request, field_id):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    locked_field = get_object_or_404(Field.objects.select_for_update(), id=field.id, is_active=True)
+                    locked_field = get_object_or_404(
+                        Field.objects.select_for_update(),
+                        id=field.id,
+                        is_active=True,
+                    )
 
                     booking = form.save(commit=False)
                     booking.field = locked_field
                     booking.save()
-
             except ValidationError as error:
                 for error_message in error.messages:
                     form.add_error(None, error_message)
-
             else:
-                formatted_price = f"{booking.total_price:,.0f}".replace(",", ".")
+                price = f"{booking.total_price:,.0f}".replace(",", ".")
                 messages.success(
                     request,
-                    f"Đặt sân thành công. Mã booking: {booking.booking_code} - Tổng tiền: {formatted_price} VNĐ.",
+                    f"Đặt sân thành công. Mã booking: {booking.booking_code} - Tổng tiền: {price} VNĐ.",
                 )
-
                 return redirect("booking_history")
-
     else:
-        first_available_slot = next(
-            (slot for slot in availability_slots if slot["status"] == "available"),
-            None,
-        )
-        initial_data = {}
+        first_slot = None
+        for slot in availability_slots:
+            if slot["status"] == "available":
+                first_slot = slot
+                break
 
-        if first_available_slot:
-            initial_data = {
-                "start_time": first_available_slot["start_value"],
-                "end_time": first_available_slot["end_value"],
-            }
+        initial_data = {}
+        if first_slot:
+            initial_data["start_time"] = first_slot["start_value"]
+            initial_data["end_time"] = first_slot["end_value"]
 
         form = BookingForm(initial=initial_data)
 
@@ -182,16 +186,11 @@ def register_view(request):
 
     if request.method == "POST":
         form = RegistrationForm(request.POST)
-
         if form.is_valid():
             user = form.save()
-
             login(request, user)
-
-            messages.success(request, (f"Chào mừng {user.username}! " "Bạn đã đăng ký thành công."))
-
+            messages.success(request, f"Chào mừng {user.username}! Bạn đã đăng ký thành công.")
             return redirect("home")
-
     else:
         form = RegistrationForm()
 
@@ -201,10 +200,9 @@ def register_view(request):
 @login_required
 def booking_history_view(request):
     selected_status = request.GET.get("status", "").strip().upper()
-    valid_statuses = {value for value, _label in Booking.Status.choices}
-    booking_queryset = Booking.objects.filter(user=request.user)
+    bookings = Booking.objects.filter(user=request.user)
 
-    summary = booking_queryset.aggregate(
+    summary = bookings.aggregate(
         total=Count("id"),
         pending=Count("id", filter=Q(status=Booking.Status.PENDING)),
         confirmed=Count("id", filter=Q(status=Booking.Status.CONFIRMED)),
@@ -212,15 +210,14 @@ def booking_history_view(request):
         cancelled=Count("id", filter=Q(status=Booking.Status.CANCELLED)),
     )
 
+    valid_statuses = [value for value, label in Booking.Status.choices]
     if selected_status in valid_statuses:
-        booking_queryset = booking_queryset.filter(status=selected_status)
+        bookings = bookings.filter(status=selected_status)
     else:
         selected_status = ""
 
-    user_bookings = booking_queryset.select_related("field").order_by("-created_at")
-
     context = {
-        "bookings": user_bookings,
+        "bookings": bookings.select_related("field").order_by("-created_at"),
         "booking_statuses": Booking.Status.choices,
         "selected_status": selected_status,
         "summary": summary,
@@ -232,16 +229,28 @@ def booking_history_view(request):
 @login_required
 @require_POST
 def cancel_booking_view(request, booking_id):
-    booking = get_object_or_404(Booking.objects.select_related("field"), id=booking_id, user=request.user)
-
-    updated_rows = Booking.objects.filter(id=booking.id, user=request.user, status=Booking.Status.PENDING).update(
-        status=Booking.Status.CANCELLED
+    booking = get_object_or_404(
+        Booking.objects.select_related("field"),
+        id=booking_id,
+        user=request.user,
     )
 
-    if updated_rows == 0:
-        messages.error(request, f"Booking {booking.booking_code} không còn ở trạng thái chờ xác nhận nên không thể hủy.")
+    updated = Booking.objects.filter(
+        id=booking.id,
+        user=request.user,
+        status=Booking.Status.PENDING,
+    ).update(status=Booking.Status.CANCELLED)
+
+    if updated:
+        messages.success(
+            request,
+            f"Đã hủy booking {booking.booking_code} tại {booking.field.name}.",
+        )
     else:
-        messages.success(request, f"Đã hủy booking {booking.booking_code} tại {booking.field.name}.")
+        messages.error(
+            request,
+            f"Booking {booking.booking_code} không còn ở trạng thái chờ xác nhận nên không thể hủy.",
+        )
 
     return redirect("booking_history")
 
@@ -249,27 +258,39 @@ def cancel_booking_view(request, booking_id):
 @staff_member_required
 def admin_dashboard_view(request):
     today = timezone.localdate()
-    current_timezone = timezone.get_current_timezone()
-    day_start = timezone.make_aware(datetime.combine(today, time.min), current_timezone)
+    tz = timezone.get_current_timezone()
+    day_start = timezone.make_aware(datetime.combine(today, time.min), tz)
     day_end = day_start + timedelta(days=1)
-    active_booking_statuses = [Booking.Status.PENDING, Booking.Status.CONFIRMED]
-    completed_revenue = (
-        Booking.objects.filter(status=Booking.Status.COMPLETED).aggregate(total=Sum("total_price"))["total"]
-        or Decimal("0")
-    )
-    status_counts = {
-        item["status"]: item["total"]
-        for item in Booking.objects.values("status").annotate(total=Count("id"))
-    }
-    status_cards = [
-        {"value": value, "label": label, "count": status_counts.get(value, 0)}
-        for value, label in Booking.Status.choices
-    ]
+
+    completed_revenue = Booking.objects.filter(
+        status=Booking.Status.COMPLETED
+    ).aggregate(total=Sum("total_price"))["total"] or Decimal("0")
+
+    status_counts = {}
+    for item in Booking.objects.values("status").annotate(total=Count("id")):
+        status_counts[item["status"]] = item["total"]
+
+    status_cards = []
+    for value, label in Booking.Status.choices:
+        status_cards.append(
+            {
+                "value": value,
+                "label": label,
+                "count": status_counts.get(value, 0),
+            }
+        )
+
+    active_statuses = [Booking.Status.PENDING, Booking.Status.CONFIRMED]
+
     upcoming_bookings = (
-        Booking.objects.filter(status__in=active_booking_statuses, start_time__gte=timezone.now())
+        Booking.objects.filter(
+            status__in=active_statuses,
+            start_time__gte=timezone.now(),
+        )
         .select_related("field", "user")
         .order_by("start_time")[:8]
     )
+
     popular_fields = (
         Field.objects.annotate(
             booking_count=Count(
@@ -287,14 +308,18 @@ def admin_dashboard_view(request):
         .order_by("-booking_count", "name")[:5]
     )
 
+    today_bookings = (
+        Booking.objects.filter(start_time__gte=day_start, start_time__lt=day_end)
+        .exclude(status=Booking.Status.CANCELLED)
+        .count()
+    )
+
     context = {
         "today": today,
         "total_fields": Field.objects.count(),
         "active_fields": Field.objects.filter(is_active=True).count(),
         "total_bookings": Booking.objects.count(),
-        "today_bookings": Booking.objects.filter(start_time__gte=day_start, start_time__lt=day_end)
-        .exclude(status=Booking.Status.CANCELLED)
-        .count(),
+        "today_bookings": today_bookings,
         "pending_bookings": status_counts.get(Booking.Status.PENDING, 0),
         "completed_revenue": completed_revenue,
         "status_cards": status_cards,
