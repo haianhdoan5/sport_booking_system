@@ -13,21 +13,27 @@ class Field(models.Model):
         PICKLEBALL = "PICKLEBALL", "Sân Pickleball"
 
     name = models.CharField(max_length=100, verbose_name="Tên sân")
-
-    field_type = models.CharField(max_length=20, choices=Type.choices, default=Type.BADMINTON, verbose_name="Loại sân")
-
+    field_type = models.CharField(
+        max_length=20,
+        choices=Type.choices,
+        default=Type.BADMINTON,
+        verbose_name="Loại sân",
+    )
     description = models.TextField(blank=True, verbose_name="Mô tả")
-
     address = models.CharField(max_length=255, blank=True, verbose_name="Địa chỉ")
-
-    price_per_hour = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Giá theo giờ")
-
-    image = models.ImageField(upload_to="fields/", blank=True, null=True, verbose_name="Hình ảnh sân")
-
+    price_per_hour = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Giá theo giờ",
+    )
+    image = models.ImageField(
+        upload_to="fields/",
+        blank=True,
+        null=True,
+        verbose_name="Hình ảnh sân",
+    )
     is_active = models.BooleanField(default=True, verbose_name="Trạng thái hoạt động")
-
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
-
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
 
     def __str__(self):
@@ -42,126 +48,116 @@ class Booking(models.Model):
         CANCELLED = "CANCELLED", "Đã hủy"
 
     booking_code = models.CharField(
-        max_length=30, unique=True, editable=False, blank=True, null=True, verbose_name="Mã đặt sân"
+        max_length=30,
+        unique=True,
+        editable=False,
+        blank=True,
+        null=True,
+        verbose_name="Mã đặt sân",
     )
-
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings", verbose_name="Khách hàng"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bookings",
+        verbose_name="Khách hàng",
     )
-
-    field = models.ForeignKey(Field, on_delete=models.PROTECT, related_name="bookings", verbose_name="Sân thể thao")
-
+    field = models.ForeignKey(
+        Field,
+        on_delete=models.PROTECT,
+        related_name="bookings",
+        verbose_name="Sân thể thao",
+    )
     start_time = models.DateTimeField(verbose_name="Giờ bắt đầu")
-
     end_time = models.DateTimeField(verbose_name="Giờ kết thúc")
-
     total_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True, editable=False, verbose_name="Tổng tiền"
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name="Tổng tiền",
     )
-
-    status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING, verbose_name="Trạng thái")
-
+    status = models.CharField(
+        max_length=15,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="Trạng thái",
+    )
     note = models.TextField(blank=True, verbose_name="Ghi chú")
-
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo đơn")
-
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
 
     def clean(self):
         super().clean()
 
-        # Không xử lý nếu chưa nhập đủ thời gian.
         if not self.start_time or not self.end_time:
             return
 
-        # Thời gian kết thúc phải sau thời gian bắt đầu.
         if self.start_time >= self.end_time:
             raise ValidationError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
 
-        local_start_time = timezone.localtime(self.start_time)
-        local_end_time = timezone.localtime(self.end_time)
+        local_start = timezone.localtime(self.start_time)
+        local_end = timezone.localtime(self.end_time)
 
-        if local_start_time.date() != local_end_time.date():
+        if local_start.date() != local_end.date():
             raise ValidationError("Thời gian bắt đầu và kết thúc phải trong cùng một ngày.")
 
-        # Chỉ kiểm tra thời gian quá khứ khi tạo booking mới.
         if self._state.adding and self.start_time < timezone.now():
             raise ValidationError("Không thể đặt sân trong quá khứ.")
 
-        # Nếu chưa chọn sân thì chưa kiểm tra tiếp.
         if not self.field_id:
             return
 
-        # Chỉ chặn sân ngừng hoạt động khi tạo booking mới.
-        # Booking cũ vẫn có thể được cập nhật trạng thái.
         if self._state.adding and not self.field.is_active:
             raise ValidationError("Sân này hiện đang tạm ngưng nhận đặt lịch.")
 
-        # Các trạng thái được xem là đang chiếm lịch sân.
         active_statuses = [self.Status.PENDING, self.Status.CONFIRMED]
-
-        # Booking đã hoàn thành hoặc đã hủy
-        # không cần kiểm tra xung đột lịch.
         if self.status not in active_statuses:
             return
 
-        overlapping_bookings = Booking.objects.filter(
+        bookings = Booking.objects.filter(
             field_id=self.field_id,
             status__in=active_statuses,
             start_time__lt=self.end_time,
             end_time__gt=self.start_time,
         )
 
-        # Khi cập nhật booking hiện tại,
-        # không so sánh chính booking đó.
         if self.pk:
-            overlapping_bookings = overlapping_bookings.exclude(pk=self.pk)
+            bookings = bookings.exclude(pk=self.pk)
 
-        if overlapping_bookings.exists():
+        if bookings.exists():
             raise ValidationError("Sân đã có người đặt trong khung giờ bạn chọn.")
 
     def calculate_total_price(self):
-        """
-        Tính tổng tiền dựa trên số giờ đặt sân
-        và giá theo giờ của sân.
-        """
         if not self.start_time or not self.end_time or not self.field_id:
             return Decimal("0.00")
 
         duration = self.end_time - self.start_time
+        seconds = Decimal(str(duration.total_seconds()))
+        hours = seconds / Decimal("3600")
+        total = self.field.price_per_hour * hours
 
-        duration_seconds = Decimal(str(duration.total_seconds()))
-
-        hours = duration_seconds / Decimal("3600")
-
-        return (self.field.price_per_hour * hours).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     def generate_booking_code(self):
-        """
-        Sinh mã đặt sân dạng:
-        BK-20260827-A1B2C3
-        """
         date_part = timezone.now().strftime("%Y%m%d")
         random_part = uuid.uuid4().hex[:6].upper()
-
         return f"BK-{date_part}-{random_part}"
 
     def save(self, *args, **kwargs):
-        # Sinh mã booking nếu chưa có.
         if not self.booking_code:
             self.booking_code = self.generate_booking_code()
 
-        # Kiểm tra dữ liệu trước khi tính tiền.
         self.full_clean(exclude=["total_price"])
 
-        # Tính lại tổng tiền.
         if self.start_time and self.end_time and self.field_id:
             self.total_price = self.calculate_total_price()
 
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.booking_code} - " f"{self.field.name} - " f"{self.start_time.strftime('%H:%M %d/%m/%Y')}"
+        booking_time = self.start_time.strftime("%H:%M %d/%m/%Y")
+        return f"{self.booking_code} - {self.field.name} - {booking_time}"
 
 
 class Payment(models.Model):
@@ -175,74 +171,92 @@ class Payment(models.Model):
         FAILED = "FAILED", "Thanh toán thất bại"
 
     booking = models.OneToOneField(
-        Booking, on_delete=models.CASCADE, related_name="payment", verbose_name="Đơn đặt sân"
+        Booking,
+        on_delete=models.CASCADE,
+        related_name="payment",
+        verbose_name="Đơn đặt sân",
     )
-
-    amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, verbose_name="Số tiền")
-
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False,
+        verbose_name="Số tiền",
+    )
     method = models.CharField(
-        max_length=20, choices=Method.choices, default=Method.CASH, verbose_name="Phương thức thanh toán"
+        max_length=20,
+        choices=Method.choices,
+        default=Method.CASH,
+        verbose_name="Phương thức thanh toán",
     )
-
     status = models.CharField(
-        max_length=15, choices=Status.choices, default=Status.PENDING, verbose_name="Trạng thái thanh toán"
+        max_length=15,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="Trạng thái thanh toán",
     )
-
-    transaction_code = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name="Mã giao dịch")
-
+    transaction_code = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Mã giao dịch",
+    )
     paid_at = models.DateTimeField(blank=True, null=True, verbose_name="Thời gian thanh toán")
-
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
-
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
 
     def clean(self):
         super().clean()
 
-        if self.booking_id:
-            if self.booking.status == Booking.Status.CANCELLED:
-                raise ValidationError("Không thể thanh toán cho lượt đặt sân đã bị hủy.")
+        if self.booking_id and self.booking.status == Booking.Status.CANCELLED:
+            raise ValidationError("Không thể thanh toán cho lượt đặt sân đã bị hủy.")
 
     def save(self, *args, **kwargs):
         if self.booking_id:
             self.amount = self.booking.total_price or Decimal("0.00")
 
-        if self.status == self.Status.PAID and not self.paid_at:
-            self.paid_at = timezone.now()
-
-        if self.status != self.Status.PAID:
+        if self.status == self.Status.PAID:
+            if not self.paid_at:
+                self.paid_at = timezone.now()
+        else:
             self.paid_at = None
 
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Thanh toán {self.booking.booking_code} - " f"{self.get_status_display()}"
+        return f"Thanh toán {self.booking.booking_code} - {self.get_status_display()}"
 
 
 class Review(models.Model):
-    booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name="review", verbose_name="Đơn đặt sân")
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reviews", verbose_name="Người đánh giá"
+    booking = models.OneToOneField(
+        Booking,
+        on_delete=models.CASCADE,
+        related_name="review",
+        verbose_name="Đơn đặt sân",
     )
-
-    field = models.ForeignKey(Field, on_delete=models.CASCADE, related_name="reviews", verbose_name="Sân được đánh giá")
-
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name="Người đánh giá",
+    )
+    field = models.ForeignKey(
+        Field,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+        verbose_name="Sân được đánh giá",
+    )
     rating = models.PositiveSmallIntegerField(verbose_name="Số sao")
-
     comment = models.TextField(blank=True, verbose_name="Nội dung đánh giá")
-
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đánh giá")
-
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
 
     def clean(self):
         super().clean()
 
-        if self.rating is not None:
-            if self.rating < 1 or self.rating > 5:
-                raise ValidationError("Số sao đánh giá phải từ 1 đến 5.")
+        if self.rating is not None and not 1 <= self.rating <= 5:
+            raise ValidationError("Số sao đánh giá phải từ 1 đến 5.")
 
         if not self.booking_id:
             return
@@ -261,4 +275,4 @@ class Review(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.username} - " f"{self.field.name} - " f"{self.rating}/5"
+        return f"{self.user.username} - {self.field.name} - {self.rating}/5"
